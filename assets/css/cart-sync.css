@@ -1,0 +1,20 @@
+.cart-sync-error {
+  display:flex;
+  align-items:center;
+  gap:12px;
+  margin:0 12px 12px;
+  padding:12px 14px;
+  border:1px solid #f4d4c4;
+  border-radius:12px;
+  background:#fff7f2;
+  color:#7b3c2c;
+  font-size:14px;
+  line-height:1.5;
+}
+.cart-sync-error span { flex:1; }
+body .cart-sync-error button {
+  flex:none;
+  color:#b34423;
+  font-size:14px!important;
+  font-weight:600;
+}

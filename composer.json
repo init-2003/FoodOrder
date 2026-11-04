@@ -1,0 +1,8 @@
+{
+  "name": "imdee/qr-ordering",
+  "description": "Mobile-first QR ordering frontend, with a future SQL Server POS adapter",
+  "type": "project",
+  "require": { "php": "^8.5" },
+  "suggest": { "ext-pdo_sqlsrv": "Required for the future SQL Server integration" },
+  "scripts": { "serve": "php -S 127.0.0.1:8080 router.php" }
+}
