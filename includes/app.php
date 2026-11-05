@@ -11,10 +11,15 @@ $base = ($base === '' || $base === '.') ? '/' : $base . '/';
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
   <meta name="theme-color" content="#fb784c">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="อันเกิม">
   <meta name="description" content="อันเกิม — เลือกความอร่อยในแบบคุณ สั่งอาหารจากโต๊ะได้ง่าย ๆ">
   <base href="<?= htmlspecialchars($base, ENT_QUOTES, 'UTF-8') ?>">
   <title>อันเกิม · อาหารเวียดนาม</title>
   <link rel="icon" href="assets/images/favicon.svg" type="image/svg+xml">
+  <link rel="manifest" href="manifest.php">
+  <link rel="apple-touch-icon" href="assets/images/pwa-180.png">
   <script>
     (function() {
       try {
@@ -149,6 +154,7 @@ $base = ($base === '' || $base === '.') ? '/' : $base . '/';
   </script>
   <script defer src="assets/vendor/sweetalert2.min.js"></script>
   <script defer src="assets/js/translations.js?v=<?= filemtime(__DIR__ . '/../assets/js/translations.js') ?>"></script>
+  <script defer src="assets/js/pwa.js?v=<?= filemtime(__DIR__ . '/../assets/js/pwa.js') ?>"></script>
   <script defer src="assets/js/app.js?v=<?= filemtime(__DIR__ . '/../assets/js/app.js') ?>"></script>
   <script defer src="assets/vendor/alpine.min.js"></script>
 </head>
