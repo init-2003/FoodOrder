@@ -154,6 +154,34 @@ html[data-initial-route="closed"] .main-content>section[aria-label="เมนู
   }
 }
 
+@media (max-width: 760px), (min-width: 761px) and (max-width: 1100px) and (orientation: portrait) {
+  .detail-overlay .detail-dialog.note-focused { width: calc(100% - 16px); margin: 0 8px 8px; border-radius: 20px; }
+  .detail-dialog .detail-image { transition: height .26s ease, opacity .2s ease; }
+  .detail-dialog :is(.detail-heading, .detail-price, .detail-note-label, .note-count, .detail-bottom) {
+    max-height: 240px;
+    opacity: 1;
+    visibility: visible;
+    overflow: hidden;
+    transition: max-height .26s ease, opacity .18s ease, margin .26s ease, padding .26s ease, border-width .26s ease;
+  }
+  .detail-dialog.note-focused .detail-image { height: 0 !important; opacity: 0; pointer-events: none; }
+  .detail-dialog.note-focused :is(.detail-heading, .detail-price, .detail-note-label, .note-count, .detail-bottom) {
+    max-height: 0;
+    opacity: 0;
+    visibility: hidden;
+    margin: 0;
+    padding: 0;
+    border-width: 0;
+    pointer-events: none;
+    transition: max-height .26s ease, opacity .18s ease, margin .26s ease, padding .26s ease, border-width .26s ease, visibility 0s linear .26s;
+  }
+  .detail-dialog .detail-body { transition: padding .26s ease; }
+  .detail-dialog .detail-body textarea { transition: min-height .26s ease; }
+  .detail-dialog.note-focused .detail-body { padding: 14px 16px; }
+  .detail-dialog.note-focused .detail-content { overflow-y: auto; }
+  .detail-dialog.note-focused .detail-body textarea { min-height: 120px; resize: none; }
+}
+
 html[data-page="history"] .history-section,
 html[data-initial-route="history"] .history-section {
   display: block !important;
@@ -4223,31 +4251,9 @@ html[data-initial-route="closed"] .topbar {
     border-radius: 24px 24px 0 0;
   }
 
-  html.keyboard-active .detail-image {
-    height: 90px !important;
-  }
-
-  html.keyboard-active .detail-dialog.note-focused .detail-image {
-    height: 64px !important;
-  }
-
-  html.keyboard-active .detail-dialog.note-focused .detail-image-label {
-    display: none;
-  }
-
   .detail-dialog.note-focused {
     box-shadow: none;
     border-radius: 24px 24px 0 0;
-  }
-
-  .detail-dialog.note-focused .detail-bottom {
-    position: static;
-    box-shadow: none;
-    border-radius: 0;
-  }
-
-  html.keyboard-active .detail-image-label {
-    display: none !important;
   }
 
   @media (max-height: 700px) {
@@ -5165,7 +5171,14 @@ body .language-switch button {
 html[data-page="menu"] body,
 html[data-initial-route="menu"] body,
 html[data-page="tables"] body,
-html[data-initial-route="tables"] body {
+html[data-initial-route="tables"] body,
+html[data-page="history"] body,
+html[data-initial-route="history"] body {
+  background: #fff;
+}
+
+html[data-page="history"] :is(.workspace, .content-layout, .main-content, .history-section),
+html[data-initial-route="history"] :is(.workspace, .content-layout, .main-content, .history-section) {
   background: #fff;
 }
 
@@ -5611,7 +5624,22 @@ html[data-initial-route="login"] .content-layout {
   :is(.menu-category-sticky, .table-category-sticky) .category-button:not(.selected) { background: #fff; }
 }
 :is(.menu-category-sticky, .table-category-sticky) .category-list { margin: 0; background: transparent; }
-.menu-category-sticky:not(.is-stuck) { background: transparent; -webkit-backdrop-filter: none; backdrop-filter: none; }
+:is(.menu-category-sticky, .table-category-sticky):not(.is-stuck) { background: transparent; -webkit-backdrop-filter: none; backdrop-filter: none; }
+@media (max-width: 760px), (min-width: 761px) and (max-width: 1100px) and (orientation: portrait) {
+  :is(.menu-category-sticky, .table-category-sticky).is-stuck { isolation: isolate; background: transparent; }
+  :is(.menu-category-sticky, .table-category-sticky).is-stuck::before {
+    content: '';
+    position: absolute;
+    inset: 0 0 -28px;
+    z-index: -1;
+    background: rgba(255, 255, 255, .8);
+    -webkit-backdrop-filter: blur(14px) saturate(130%);
+    backdrop-filter: blur(14px) saturate(130%);
+    -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 60%, transparent 100%);
+    mask-image: linear-gradient(to bottom, #000 0%, #000 60%, transparent 100%);
+    pointer-events: none;
+  }
+}
 @media (min-width: 761px) and (orientation: landscape), (min-width: 1101px) {
   .menu-category-sticky.is-stuck {
     isolation: isolate;

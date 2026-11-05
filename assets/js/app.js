@@ -268,7 +268,7 @@ document.addEventListener('alpine:init', () => {
     const initialCart = getStoredCart(activeTable, activeDoc);
 
     return {
-      page: startPage, categories: [], items: [], recommendationPairs: [], categoryId: readSelectedCategory(), search: '', searchOpen: false, language: readLanguage(),
+      page: startPage, categories: [], items: [], recommendationPairs: [], categoryId: readSelectedCategory(), search: '', searchOpen: false, menuSearchFocused: false, language: readLanguage(),
       loading: true, loadError: false, cart: Array.isArray(initialCart) ? initialCart : [], orders: [], closed: isClosed,
       billLoaded: false,
       staff: initialStaff,
@@ -277,11 +277,11 @@ document.addEventListener('alpine:init', () => {
       tablesList: [], tablesLoading: false, tablesRefreshing: false, tableSearch: '', tableFilter: 'all',
       pendingItems: [], pendingTotal: 0, confirmedTotal: 0, confirming: false,
       selected: { id: '', name: '', english: '', price: 0, originalPrice: 0, unit: '', image: '', description: '', allergens: '', recommended: false, available: true },
-      detailOpen: false, detailQty: 1, detailNote: '', noteFocused: false, editingKey: null,
+      detailOpen: false, detailQty: 1, detailNote: '', noteFocused: false, noteFocusTimer: null, editingKey: null,
       sending: false, orderAwaitingConfirm: false, pendingRequest: null, returnFocus: null, storageWarningShown: false,
       cartReady: false, cartError: false, cartRevision: 0, legacyCheckDone: false,
       cartBump: false,
-      categoryDrag: null, categorySuppressClick: false, categoryHasScrolled: false, menuCategoryStuck: false,
+      categoryDrag: null, categorySuppressClick: false, categoryHasScrolled: false, menuCategoryStuck: false, tableCategoryStuck: false,
       restoreMenuCategory: performance.getEntriesByType('navigation')[0]?.type === 'reload',
       menuCategoryScrolling: false, menuCategoryScrollTimer: null,
       navHidden: false,
@@ -525,11 +525,19 @@ document.addEventListener('alpine:init', () => {
 
       async init() {
         document.documentElement.lang = this.language;
+        document.addEventListener('pointerdown', event => {
+          if (isMobileLayout() && this.menuSearchFocused && !this.$refs.menuSearchBar?.contains(event.target)) {
+            this.$refs.menuSearch?.blur();
+          }
+        });
         let categoryFrame = 0;
         window.addEventListener('scroll', () => {
           const stickyBar = document.querySelector('.menu-category-sticky');
           const stickyTop = stickyBar ? parseFloat(getComputedStyle(stickyBar).top) || 0 : 0;
           this.menuCategoryStuck = this.page === 'menu' && !!stickyBar && stickyBar.getBoundingClientRect().top <= stickyTop + 1;
+          const tableBar = document.querySelector('.table-category-sticky');
+          const tableStickyTop = tableBar ? parseFloat(getComputedStyle(tableBar).top) || 0 : 0;
+          this.tableCategoryStuck = this.page === 'tables' && !!tableBar && tableBar.getBoundingClientRect().top <= tableStickyTop + 1;
           if (this.menuCategoryScrolling) {
             this.finishMenuCategoryScroll();
             return;
@@ -654,9 +662,12 @@ document.addEventListener('alpine:init', () => {
           }
         });
         if (window.visualViewport) {
+          let keyboardWasOpen = false;
           const syncVV = () => {
             const vv = window.visualViewport;
             const isKb = (window.innerHeight - vv.height) > 120;
+            if (keyboardWasOpen && !isKb && this.menuSearchFocused && isMobileLayout()) this.$refs.menuSearch?.blur();
+            keyboardWasOpen = isKb;
             document.documentElement.style.setProperty('--vv-height', `${vv.height}px`);
             document.documentElement.style.setProperty('--vv-top', `${vv.offsetTop}px`);
             document.documentElement.classList.toggle('keyboard-active', isKb);
@@ -1136,6 +1147,8 @@ async syncBill() {
       }
     },
     closeMenuSearch() {
+      this.$refs.menuSearch?.blur();
+      this.menuSearchFocused = false;
       this.searchOpen = false;
       if (this.page === 'tables') {
         this.tableSearch = '';
@@ -1283,6 +1296,7 @@ async syncBill() {
     },
     closeDetail(fromHistory = false) {
       if (!this.detailOpen) return;
+      this.endDetailNoteEditing();
       if (fromHistory && this.$refs.detailOverlay) this.$refs.detailOverlay.style.display = 'none';
       this.detailOpen = false;
       this.persistOpenDetail();
@@ -1290,6 +1304,23 @@ async syncBill() {
       if (!isMobileLayout() && this.returnFocus?.focus) {
         this.$nextTick(() => this.returnFocus.focus({ preventScroll: true }));
       }
+    },
+    beginDetailNoteEditing() {
+      clearTimeout(this.noteFocusTimer);
+      if (!isMobileLayout()) {
+        this.noteFocused = true;
+        return;
+      }
+      this.noteFocusTimer = setTimeout(() => {
+        if (!this.detailOpen || document.activeElement !== this.$refs.detailNoteInput) return;
+        this.noteFocused = true;
+        this.$nextTick(() => this.revealDetailNote());
+      }, 250);
+    },
+    endDetailNoteEditing() {
+      clearTimeout(this.noteFocusTimer);
+      this.noteFocusTimer = null;
+      this.noteFocused = false;
     },
     revealDetailNote() {
       if (!this.noteFocused || !isMobileLayout()) return;
