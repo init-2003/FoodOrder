@@ -2,6 +2,13 @@
 /vendor/
 /node_modules/
 /tools/
-/storage/
+/storage/*
+!/storage/.gitkeep
+!/storage/rate-limit/
+/storage/rate-limit/*
+!/storage/rate-limit/.gitkeep
+!/storage/idempotency/
+/storage/idempotency/*
+!/storage/idempotency/.gitkeep
 /.phpunit.cache/
 *.log
