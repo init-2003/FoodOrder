@@ -764,7 +764,9 @@ document.addEventListener('alpine:init', () => {
           const selected = list?.querySelector('.category-button.selected');
           if (selected) list.scrollLeft += selected.getBoundingClientRect().left - list.getBoundingClientRect().left - 8;
         });
-        this.items = data.items;
+        // The POS menu query has no availability field; keep ordering enabled
+        // without presenting a fabricated status in the API response.
+        this.items = data.items.map(item => ({ ...item, available: item.available !== false }));
         this.recommendationPairs = Array.isArray(data.recommendationPairs) ? data.recommendationPairs : [];
         const stored = getStoredCart(this.table, this.docNo) || this.cart;
         this.cart = Array.isArray(stored) ? stored.flatMap(line => {
@@ -967,7 +969,7 @@ async syncBill() {
       const hasRecommendations = this.items.some(item => item.recommended && item.available);
       const items = this.items.filter(item =>
         (query || this.categoryId === 'all' || (this.categoryId === 'recommended' ? (!hasRecommendations || (item.recommended && item.available)) : item.category === this.categoryId)) &&
-        (!query || `${item.name} ${item.english}`.toLocaleLowerCase().includes(query)));
+        (!query || `${item.name} ${item.english || ''}`.toLocaleLowerCase().includes(query)));
       return this.categoryId === 'recommended' && !query && hasRecommendations
         ? items.sort((a, b) => (b.recommendationScore || 0) - (a.recommendationScore || 0) || (b.recommendationQuantity || 0) - (a.recommendationQuantity || 0) || String(a.id).localeCompare(String(b.id)))
         : items;
@@ -1001,7 +1003,7 @@ async syncBill() {
     },
     get menuSections() {
       const query = this.search.trim().toLocaleLowerCase();
-      const matching = this.items.filter(item => !query || `${item.name} ${item.english}`.toLocaleLowerCase().includes(query));
+      const matching = this.items.filter(item => !query || `${item.name} ${item.english || ''}`.toLocaleLowerCase().includes(query));
       const sections = this.categories.filter(category => !['all', 'recommended'].includes(category.id))
         .map(category => ({ ...category, items: matching.filter(item => item.category === category.id) }))
         .filter(category => category.items.length);

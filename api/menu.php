@@ -4,46 +4,14 @@ declare(strict_types=1);
 require_once __DIR__ . '/../includes/functions.php';
 require_once __DIR__ . '/../includes/db.php';
 
-function fallbackMenu(): void {
-    $fallbackFile = __DIR__ . '/../assets/data/menu.json';
-    if (file_exists($fallbackFile)) {
-        $menu = json_decode(file_get_contents($fallbackFile), true, 512, JSON_THROW_ON_ERROR);
-        foreach ($menu['items'] as &$item) {
-            $item['recommended'] = false;
-            if (($item['badge'] ?? '') === 'แนะนำ') $item['badge'] = '';
-        }
-        unset($item);
-        jsonResponse($menu);
-    }
-    jsonResponse(['mode' => 'fallback', 'categories' => [], 'items' => []]);
-}
-
-if (getenv('POS_MODE') === 'demo') {
-    fallbackMenu();
-}
-
 $pdo = Database::getConnection();
 if (!$pdo) {
-    fallbackMenu();
+    jsonResponse(['error' => ['code' => 'DATABASE_UNAVAILABLE', 'message' => 'ไม่สามารถเชื่อมต่อฐานข้อมูลได้']], 503);
 }
 
 $branchId = trim((string)($_GET['Branch_ID'] ?? $_GET['branch'] ?? getenv('DEFAULT_BRANCH_ID') ?? '001'));
 
 try {
-    function getCatIcon(string $name): string {
-        if (str_contains($name, 'กาแฟ')) return 'cup';
-        if (str_contains($name, 'ชา') || str_contains($name, 'โกโก้') || str_contains($name, 'มัทฉะ')) return 'teapot';
-        if (str_contains($name, 'เบียร์') || str_contains($name, 'ไวน์')) return 'wine';
-        if (str_contains($name, 'สมุนไพร')) return 'herbal';
-        if (str_contains($name, 'โซดา') || str_contains($name, 'ผลไม้')) return 'fizzy';
-        if (str_contains($name, 'น้ำดื่ม') || str_contains($name, 'น้ำแข็ง')) return 'water';
-        if (str_contains($name, 'ขนม') || str_contains($name, 'หวาน')) return 'cake';
-        if (str_contains($name, 'ทานเล่น') || str_contains($name, 'ของทอด')) return 'snack';
-        if (str_contains($name, 'ยำ') || str_contains($name, 'สลัด')) return 'leaf';
-        if (str_contains($name, 'เครื่องดื่ม') || str_contains($name, 'น้ำ')) return 'cup';
-        return 'bowl';
-    }
-
     function getItemImage(string $name, string $cat): string {
         if (str_contains($name, 'กาแฟ') || str_contains($name, 'ชา') || str_contains($name, 'น้ำ') || str_contains($name, 'โซดา') || str_contains($name, 'เบียร์') || str_contains($name, 'Americano') || str_contains($name, 'Latte') || str_contains($name, 'Tea') || str_contains($name, 'Cocoa') || str_contains($name, 'Soda') || str_contains($name, 'Berry')) return 'assets/images/drink.jpg';
         if (str_contains($name, 'ไอศกรีม') || str_contains($name, 'หวาน') || str_contains($name, 'สาคู') || str_contains($name, 'เฉาก๊วย') || str_contains($name, 'ถั่วดำ')) return 'assets/images/icecream.jpg';
@@ -125,9 +93,7 @@ try {
         error_log('Recommendation pairs unavailable: ' . $e->getMessage());
     }
 
-    $categories = [
-        ['id' => 'all', 'name' => 'ทั้งหมด', 'icon' => 'grid'],
-    ];
+    $categories = [];
 
     $catMap = [];
     foreach ($rawCategories as $category) {
@@ -136,15 +102,15 @@ try {
         if ($name === '' || $typeId === '') continue;
         $catId = 'type_' . $typeId;
         $catMap[$name] = $catId;
-        $categories[] = ['id' => $catId, 'name' => $name, 'icon' => getCatIcon($name)];
+        $categories[] = ['id' => $catId, 'name' => $name];
     }
     $items = [];
 
     foreach ($rawItems as $r) {
-        $cName = trim(Database::decodeThai($r['Type_Name'])) ?: 'อาหารทั่วไป';
+        $cName = trim(Database::decodeThai($r['Type_Name']));
 
         $tName = Database::decodeThai($r['Trade_Name']);
-        $uName = Database::decodeThai($r['Unit_Name']) ?: 'จาน';
+        $uName = Database::decodeThai($r['Unit_Name']);
         $linkImg = Database::decodeThai($r['Link_Part_image']);
         $catId = $catMap[$cName] ?? '';
 
@@ -157,20 +123,15 @@ try {
             'id' => $r['Trade_ID'],
             'name' => $tName,
             'unit' => $uName,
-            'foodType' => $r['Food_Type'] ?? 'FOOD',
-            'english' => ($r['Food_Type'] ?? '') === 'DRINK' ? 'Beverage' : 'Dish',
+            'foodType' => $r['Food_Type'],
             'category' => $catId,
             'price' => $price,
             'image' => $img,
-            'description' => "เมนูสดใหม่ ปรุงจากวัตถุดิบคุณภาพ เสิร์ฟร้อน ๆ สำหรับมื้อพิเศษของคุณ",
             'recommended' => $isRec,
             'recommendationScore' => $itemRank['score'] ?? 0,
             'recommendationQuantity' => $itemRank['quantity'] ?? 0,
             'trendScore' => $itemRank['trend'] ?? 0,
             'trendRecentQuantity' => $itemRank['recent'] ?? 0,
-            'badge' => $isRec ? 'แนะนำ' : '',
-            'available' => true,
-            'allergens' => 'สอบถามข้อมูลสารก่อภูมิแพ้กับพนักงาน',
         ];
     }
 
@@ -184,5 +145,5 @@ try {
     ]);
 } catch (Throwable $e) {
     error_log("Error in api/menu.php: " . $e->getMessage());
-    fallbackMenu();
+    jsonResponse(['error' => ['code' => 'MENU_UNAVAILABLE', 'message' => 'ไม่สามารถโหลดข้อมูลเมนูได้']], 503);
 }
