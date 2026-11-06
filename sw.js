@@ -1,10 +1,10 @@
 /* Only the offline notice is cached; bills, sessions, and orders stay network-only. */
 const cachePrefix = `imdee-offline:${encodeURIComponent(new URL(self.registration.scope).pathname)}:`;
-const cacheName = `${cachePrefix}v1`;
+const cacheName = `${cachePrefix}v2`;
 const offlineUrl = new URL('offline.html', self.registration.scope).href;
 
 self.addEventListener('install', event => {
-  event.waitUntil(caches.open(cacheName).then(cache => cache.add(offlineUrl)).then(() => self.skipWaiting()));
+  event.waitUntil(caches.open(cacheName).then(cache => cache.add(new Request(offlineUrl, { cache: 'reload' }))).then(() => self.skipWaiting()));
 });
 
 self.addEventListener('activate', event => {

@@ -1,5 +1,8 @@
 <?php
 declare(strict_types=1);
+require_once __DIR__ . '/log.php';
+$autoload = dirname(__DIR__) . '/vendor/autoload.php';
+if (is_file($autoload)) require_once $autoload;
 
 // POS timestamps are stored as local wall time without timezone information.
 date_default_timezone_set('Asia/Bangkok');
@@ -7,6 +10,10 @@ date_default_timezone_set('Asia/Bangkok');
 if (!function_exists('loadEnv')) {
     function loadEnv(string $path): void {
         if (!file_exists($path)) {
+            return;
+        }
+        if (class_exists(\Dotenv\Dotenv::class)) {
+            \Dotenv\Dotenv::createUnsafeMutable(dirname($path), basename($path))->load();
             return;
         }
         $lines = file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
@@ -67,7 +74,7 @@ class Database {
                 self::$pdo = $pdo;
                 return $pdo;
             } catch (Throwable $e) {
-                error_log("DB connect error with DSN $dsn: " . $e->getMessage());
+                appLog('error', 'SQL Server connection failed', ['driver' => str_contains($dsn, 'ODBC Driver 18') ? 'ODBC Driver 18' : 'SQL Server', 'error' => $e->getMessage()]);
             }
         }
 

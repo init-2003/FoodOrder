@@ -155,10 +155,12 @@ $base = ($base === '' || $base === '.') ? '/' : $base . '/';
   <script defer src="assets/vendor/sweetalert2.min.js"></script>
   <script defer src="assets/js/translations.js?v=<?= filemtime(__DIR__ . '/../assets/js/translations.js') ?>"></script>
   <script defer src="assets/js/pwa.js?v=<?= filemtime(__DIR__ . '/../assets/js/pwa.js') ?>"></script>
+  <script>window.appBranch = <?= json_encode($branchId, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;</script>
+  <script>window.csrfToken = <?= json_encode($_SESSION['csrf_token'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;</script>
   <script defer src="assets/js/app.js?v=<?= filemtime(__DIR__ . '/../assets/js/app.js') ?>"></script>
   <script defer src="assets/vendor/alpine.min.js"></script>
 </head>
-<body x-data="orderingApp('<?= htmlspecialchars($initialPage, ENT_QUOTES, 'UTF-8') ?>', <?= !empty($initialClosed) ? 'true' : 'false' ?>, '<?= htmlspecialchars((string)($displayTable ?? '12'), ENT_QUOTES, 'UTF-8') ?>', '<?= htmlspecialchars((string)($displayDoc ?? ''), ENT_QUOTES, 'UTF-8') ?>', <?= !empty($initialCancelled) ? 'true' : 'false' ?>)" @keydown.escape.window="closeDetail()" :class="{'dialog-open': detailOpen, 'detail-note-active': detailOpen && noteFocused, 'closed-bill-page': page === 'closed' || page === 'login'}">
+<body x-data="orderingApp('<?= htmlspecialchars($initialPage, ENT_QUOTES, 'UTF-8') ?>', <?= !empty($initialClosed) ? 'true' : 'false' ?>, '<?= htmlspecialchars((string)($displayTable ?? ''), ENT_QUOTES, 'UTF-8') ?>', '<?= htmlspecialchars((string)($displayDoc ?? ''), ENT_QUOTES, 'UTF-8') ?>', <?= !empty($initialCancelled) ? 'true' : 'false' ?>)" @keydown.escape.window="closeDetail()" :class="{'dialog-open': detailOpen, 'detail-note-active': detailOpen && noteFocused, 'closed-bill-page': page === 'closed' || page === 'login'}">
 <svg class="icon-defs" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs>
   <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5M5.5 9.5V21h13V9.5M9.5 21v-7h5v7"/></symbol>
   <symbol id="i-snack" viewBox="0 0 24 24"><path d="M5 9h14l-1.4 11H6.4L5 9Zm3 0L7 4h3l1 5m2 0 1-6h3l-1 6"/></symbol>
@@ -218,7 +220,7 @@ $base = ($base === '' || $base === '.') ? '/' : $base . '/';
       <div class="ticket-line"></div>
       <div class="ticket-guests">
         <svg class="icon"><use :href="staff ? '#i-user' : '#i-users'"/></svg>
-        <span x-text="staff ? staff.name : (guests + ' ' + t('ท่าน'))"></span>
+        <span x-text="staff ? staff.name : (guests ? guests + ' ' + t('ท่าน') : '')"></span>
         <span class="status-dot" :class="{'status-closed': closed && !isCancelled, 'status-cancelled': isCancelled}"></span>
       </div>
     </div>
@@ -458,7 +460,6 @@ $base = ($base === '' || $base === '.') ? '/' : $base . '/';
         <p x-show="isCancelled && docNo" x-text="t('เลขที่บิล') + ' ' + docNo"></p>
         <p x-show="billError" style="color: #b91c1c; font-weight: 500;" x-text="language === 'en' ? 'Unable to load this bill. Please contact the staff.' : billError"></p>
         <button class="primary-button" x-show="!isCancelled && !waitingForTable && !billError" @click="navigate('history')"><span x-text="t('ดูรายการที่สั่ง')">ดูรายการที่สั่ง</span> <svg class="icon"><use href="#i-receipt"/></svg></button>
-        <button class="text-button" @click="resetDemo()" x-show="mode === 'demo'"><span x-text="t('เริ่มทดลองใหม่')">เริ่มทดลองใหม่</span></button>
         </div>
       </section>
 

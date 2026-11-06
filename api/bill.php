@@ -7,34 +7,19 @@ require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/../includes/session.php';
 
 $sessionEmId = trim((string)($_SESSION['Em_Id'] ?? ''));
-$posMode = getenv('POS_MODE') ?: 'live';
 $fnDocNo = trim((string)($_GET['Fn_Doc_No'] ?? $_GET['doc'] ?? $_GET['doc_no'] ?? $_GET['bill'] ?? ''));
-$branchId = trim((string)($_GET['Branch_ID'] ?? $_GET['branch'] ?? getenv('DEFAULT_BRANCH_ID') ?? '001'));
+$branchId = trim((string)($_GET['Branch_ID'] ?? $_GET['branch'] ?? (getenv('DEFAULT_BRANCH_ID') ?: '')));
+if ($branchId === '') { jsonResponse(['error' => ['code' => 'MISSING_BRANCH', 'message' => 'กรุณาระบุรหัสสาขาใน URL หรือ DEFAULT_BRANCH_ID']], 400); }
 $tableInput = trim((string)($_GET['table'] ?? ''));
 
-if ($posMode === 'demo') {
-    $tableDisplay = $tableInput ?: (ltrim(getenv('DEFAULT_TABLE_ID') ?: '12', '0') ?: '12');
-    jsonResponse([
-        'mode' => 'demo',
-        'bill' => [
-            'id' => $fnDocNo ?: 'DEMO-012',
-            'docNo' => $fnDocNo ?: 'DEMO-012',
-            'docSts' => 0,
-            'docStsDesc' => 'เปิดบิล (โหมดทดลอง)',
-            'table' => $tableDisplay,
-            'tableName' => 'โต๊ะ ' . $tableDisplay,
-            'guests' => 4,
-            'status' => 'open',
-            'total' => 0.0,
-            'closed' => false,
-            'canOrder' => true,
-        ],
-    ]);
+if ($fnDocNo === '' && $tableInput === '') {
+    jsonResponse(['error' => ['code' => 'MISSING_TABLE_OR_BILL', 'message' => 'กรุณาระบุหมายเลขโต๊ะหรือเลขที่บิล']], 400);
 }
+
 
 $pdo = Database::getConnection();
 if (!$pdo) {
-    $tableDisplay = $tableInput ?: '12';
+    $tableDisplay = $tableInput;
     jsonResponse([
         'mode' => 'offline',
         'bill' => [
@@ -44,7 +29,7 @@ if (!$pdo) {
             'docStsDesc' => 'ออฟไลน์',
             'table' => $tableDisplay,
             'tableName' => 'โต๊ะ ' . $tableDisplay,
-            'guests' => 4,
+            'guests' => null,
             'status' => 'open',
             'total' => 0.0,
             'closed' => false,
@@ -84,8 +69,8 @@ try {
         $tableId = trim((string)$bill['Table_ID']);
         $tableUnpadded = ltrim($tableId, '0') ?: $tableId;
         $tableName = $rawTableName ?: ('โต๊ะ ' . $tableUnpadded);
-        $guests = (int)($bill['Table_Person'] ?? 4);
-        if ($guests <= 0) $guests = 4;
+        $guests = (int)($bill['Table_Person'] ?? 0) ?: null;
+        if ($guests !== null && $guests < 0) $guests = null;
         $total = (float)$bill['Fn_Total'];
 
         // Doc_Sts: 0 = เปิดบิล, 1 = ออกใบเสร็จแล้ว, 3 = ยกเลิก
@@ -175,10 +160,10 @@ try {
     // -------------------------------------------------------------
     // Case 2: Queried by Table ID (e.g. ?table=2 or default table)
     // -------------------------------------------------------------
-    $tableTarget = $tableInput !== '' ? $tableInput : (getenv('DEFAULT_TABLE_ID') ?: '012');
+    $tableTarget = $tableInput;
     $tablePadded = str_pad((string)$tableTarget, 3, '0', STR_PAD_LEFT);
     $tableUnpadded = ltrim((string)$tableTarget, '0') ?: $tableTarget;
-    $autoOpen = filter_var($_GET['open'] ?? $_GET['auto_open'] ?? false, FILTER_VALIDATE_BOOLEAN);
+    $autoOpen = false;
 
     // 2.0 Check table info & status in pbm_table
     $tableSts = '';
@@ -253,8 +238,8 @@ try {
     if ($openBill) {
         $rawTableName = Database::decodeThai($openBill['Table_Name']);
         $tableName = $rawTableName ?: ($pbmTableName ?: ('โต๊ะ ' . $tableUnpadded));
-        $guests = (int)($openBill['Table_Person'] ?? 4);
-        if ($guests <= 0) $guests = 4;
+        $guests = (int)($openBill['Table_Person'] ?? 0) ?: null;
+        if ($guests !== null && $guests < 0) $guests = null;
 
         jsonResponse([
             'mode' => 'live',
@@ -272,31 +257,6 @@ try {
                 'total' => (float)$openBill['Fn_Total'],
                 'closed' => false,
                 'canOrder' => true,
-            ],
-        ]);
-    }
-
-    // 2.2 If pbm_table has Table_STS = 'O' (table is marked open in POS) but no Doc_Sts = 0 exists in Fnt_Header,
-    // recover by creating the open bill only if staff is authenticated
-    if ($tableSts === 'O' && $sessionEmId !== '') {
-        $opened = openOrGetTableBill($pdo, (string)$tableTarget, $branchId, $sessionEmId, '');
-        jsonResponse([
-            'mode' => 'live',
-            'bill' => [
-                'id' => $opened['docNo'],
-                'docNo' => $opened['docNo'],
-                'docSts' => 0,
-                'docStsDesc' => 'เปิดบิล',
-                'table' => $opened['tableUnpadded'],
-                'tableId' => $opened['tableId'],
-                'tableName' => $opened['tableName'],
-                'tableSts' => 'O',
-                'guests' => $opened['guests'],
-                'status' => 'open',
-                'total' => 0.0,
-                'closed' => false,
-                'canOrder' => true,
-                'created' => $opened['created'],
             ],
         ]);
     }
@@ -328,7 +288,7 @@ try {
             'tableId' => $pbmTableId,
             'tableName' => $tableName,
             'tableSts' => $tableSts,
-            'guests' => 4,
+            'guests' => null,
             'status' => 'available',
             'total' => 0.0,
             'closed' => false,
@@ -337,19 +297,19 @@ try {
         ],
     ]);
 } catch (Throwable $e) {
-    error_log("Error in api/bill.php: " . $e->getMessage());
+    appLog('error', 'bill request failed', ['error' => $e->getMessage()]);
     jsonResponse([
         'mode' => 'error',
         'error' => [
             'code' => 'SERVER_ERROR',
-            'message' => $e->getMessage(),
+            'message' => 'ไม่สามารถโหลดข้อมูลบิลได้ กรุณาลองอีกครั้ง',
         ],
         'bill' => [
             'id' => '',
             'docNo' => '',
             'docSts' => 0,
-            'table' => $tableInput ?: '12',
-            'tableName' => 'โต๊ะ ' . ($tableInput ?: '12'),
+            'table' => $tableInput,
+            'tableName' => $tableInput !== '' ? 'โต๊ะ ' . $tableInput : '',
             'status' => 'open',
             'total' => 0.0,
             'closed' => false,

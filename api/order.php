@@ -17,10 +17,6 @@ if (!is_array($data) || empty($data['items']) || !is_array($data['items'])) {
     jsonResponse(['error' => ['code' => 'INVALID_PAYLOAD', 'message' => 'ไม่มีรายการอาหารในคำสั่งซื้อ']], 400);
 }
 
-$posMode = getenv('POS_MODE') ?: 'live';
-if ($posMode === 'demo') {
-    jsonResponse(['error' => ['code' => 'POS_DEMO_MODE', 'message' => 'ระบบอยู่ในโหมดทดลอง']], 501);
-}
 
 $pdo = Database::getConnection();
 if (!$pdo) {
@@ -28,21 +24,15 @@ if (!$pdo) {
 }
 
 $docInput = trim((string)($data['doc'] ?? $data['docNo'] ?? $data['Fn_Doc_No'] ?? ''));
-$tableInput = $data['table'] ?? getenv('DEFAULT_TABLE_ID') ?? '012';
+$tableInput = trim((string)($data['table'] ?? ''));
+if ($docInput === '' && $tableInput === '') {
+    jsonResponse(['error' => ['code' => 'MISSING_TABLE_OR_BILL', 'message' => 'กรุณาระบุหมายเลขโต๊ะหรือเลขที่บิล']], 400);
+}
 $tablePadded = str_pad((string)$tableInput, 3, '0', STR_PAD_LEFT);
 $tableUnpadded = ltrim((string)$tableInput, '0');
-$branchId = trim((string)($data['branch'] ?? $data['Branch_ID'] ?? getenv('DEFAULT_BRANCH_ID') ?? '001'));
-$pbUser = trim((string)(
-    $data['staff_id']
-    ?? $data['Em_Id']
-    ?? $data['Pb_User']
-    ?? $_SESSION['Em_Id']
-    ?? getenv('POS_USER')
-    ?? '333333'
-));
-if ($pbUser === '') {
-    $pbUser = '333333';
-}
+$branchId = trim((string)($data['branch'] ?? $data['Branch_ID'] ?? (getenv('DEFAULT_BRANCH_ID') ?: '')));
+if ($branchId === '') { jsonResponse(['error' => ['code' => 'MISSING_BRANCH', 'message' => 'กรุณาระบุรหัสสาขาใน URL หรือ DEFAULT_BRANCH_ID']], 400); }
+$pbUser = trim((string)($_SESSION['Em_Id'] ?? ''));
 
 $sessionToken = trim((string)($data['session_token'] ?? $data['sessionToken'] ?? ''));
 $idempotencyKey = trim((string)($data['idempotency_key'] ?? $data['idempotencyKey'] ?? $_SERVER['HTTP_IDEMPOTENCY_KEY'] ?? ''));
@@ -83,7 +73,7 @@ try {
 
     $docNo = null;
     $orderNo = 1;
-    $tableName = 'โต๊ะ ' . ($tableUnpadded ?: '12');
+    $tableName = $tableUnpadded !== '' ? 'โต๊ะ ' . $tableUnpadded : '';
 
     // -------------------------------------------------------------
     // Check bill status with row-level update lock (UPDLOCK, ROWLOCK) to prevent order round race condition
@@ -121,6 +111,7 @@ try {
         if ($orderNo < 1) $orderNo = 1;
         $tablePadded = $targetBill['Table_ID'];
         $tableUnpadded = ltrim($tablePadded, '0') ?: $tablePadded;
+        $tableName = $tableUnpadded !== '' ? 'โต๊ะ ' . $tableUnpadded : '';
         $decodedName = Database::decodeThai($targetBill['Table_Name']);
         if ($decodedName) $tableName = $decodedName;
         $tableNameHex = Database::hexThai($tableName);
@@ -170,6 +161,12 @@ try {
         }
     }
 
+    $stmt = $pdo->prepare('SELECT Pb_User FROM Fnt_Header WHERE Branch_ID = ? AND Fn_Doc_No = ?');
+    $stmt->execute([$branchId, $docNo]);
+    $billUser = $stmt->fetchColumn();
+    $stmt->closeCursor();
+    if ($pbUser === '') $pbUser = trim((string)$billUser);
+
     // Resolve and lock every cart row before changing any stock or status.
     $drafts = [];
     if ($fromCart) {
@@ -207,8 +204,12 @@ try {
     foreach ($data['items'] as $item) {
         $draft = $fromCart ? $drafts[(string)$item['key']] : null;
         $itemId = trim((string)($draft['Trade_ID'] ?? $item['id'] ?? ''));
-        $amountno = max(1, (int)($draft['Qty'] ?? $item['qty'] ?? 1));
+        $amountno = filter_var($draft['Qty'] ?? $item['qty'] ?? null, FILTER_VALIDATE_INT);
         $note = $draft ? Database::decodeThai($draft['Note']) : trim((string)($item['note'] ?? ''));
+        if ($itemId === '' || $amountno === false || $amountno < 1 || $amountno > 99 || mb_strlen($note, 'UTF-8') > 200) {
+            $pdo->rollBack();
+            jsonResponse(['error' => ['code' => 'INVALID_ITEM', 'message' => 'ข้อมูลรายการอาหารไม่ถูกต้อง']], 400);
+        }
 
         // Query product details from Trade
         $stmtP = $pdo->prepare("SELECT Branch_ID, Trade_ID, 
@@ -222,18 +223,18 @@ try {
         $stmtP->execute([$itemId, $branchId]);
         $product = $stmtP->fetch(PDO::FETCH_ASSOC);
         $stmtP->closeCursor();
-        if ($fromCart && !$product) {
+        if (!$product) {
             $pdo->rollBack();
             jsonResponse(['error' => ['code' => 'ITEM_NOT_FOUND', 'message' => 'ไม่พบสินค้าในระบบ POS กรุณาตรวจสอบตะกร้า']], 409);
         }
 
-        $tName = $product ? Database::decodeThai($product['Trade_Name']) : ($item['name'] ?? 'อาหาร');
-        $cName = $product ? Database::decodeThai($product['Type_Name']) : 'อาหารจานหลัก';
-        $uName = $product ? Database::decodeThai($product['Unit_Name']) : 'จาน';
+        $tName = Database::decodeThai($product['Trade_Name']);
+        $cName = Database::decodeThai($product['Type_Name']);
+        $uName = Database::decodeThai($product['Unit_Name']);
         $tradeGroupPro = $product ? (Database::decodeThai($product['Group_Pro']) ?: '') : '';
         $foodType = $product ? ($product['Food_Type'] ?? 'FOOD') : 'FOOD';
         $costPrice = (float)($draft['Cost_Price'] ?? $product['Cost_Price'] ?? 0);
-        $salePrice = (float)($draft['Sale_Price'] ?? $product['Sale_Price'] ?? $item['price'] ?? 0);
+        $salePrice = (float)($draft['Sale_Price'] ?? $product['Sale_Price']);
         $tradePoint = (int)($product['Trade_Point'] ?? 0);
         $currentTradeQty = (float)($product['Qty'] ?? 0);
         $cutPerUnit = (float)($product['Qty_Cut_Stock'] ?? 1);
@@ -264,13 +265,15 @@ try {
             Unit_Name, Type_Name, Food_Type, Group_Pro,
             Cost_Price, Sale_Price, Pb_User, Pb_Now, Print_STS, Food_Que_STS, Trade_Point
         ) VALUES (
-            '$branchId', '$docNo', '$dateOnly', '$now', CONVERT(nvarchar(30), $tableNameHex), 'CASH', '$itemId', CONVERT(nvarchar(200), $tradeHex),
-            $amountno, $qtyCutStock,
-            CONVERT(nvarchar(20), $unitHex), CONVERT(nvarchar(50), $typeHex), '$foodType', CONVERT(nvarchar(50), $groupProHex),
-            $costPrice, $salePrice, '$pbUser', '$now',
-            '', 'S', $tradePoint
+            ?, ?, CONVERT(datetime, CAST(? AS varchar(19)), 120), CONVERT(datetime, CAST(? AS varchar(19)), 120), CONVERT(nvarchar(30), $tableNameHex), (SELECT Customer_Id FROM Fnt_Header WHERE Branch_ID=? AND Fn_Doc_No=?), ?, CONVERT(nvarchar(200), $tradeHex),
+            ?, CAST(? AS decimal(18,4)),
+            CONVERT(nvarchar(20), $unitHex), CONVERT(nvarchar(50), $typeHex), ?, CONVERT(nvarchar(50), $groupProHex),
+            CAST(? AS money), CAST(? AS money), ?, CONVERT(datetime, CAST(? AS varchar(19)), 120),
+            '', 'S', ?
         )";
-        $pdo->exec($sqlDetail);
+        $stmt = $pdo->prepare($sqlDetail);
+        $stmt->execute([$branchId, $docNo, $dateOnly, $now, $branchId, $docNo, $itemId, $amountno, $qtyCutStock, $foodType, $costPrice, $salePrice, $pbUser, $now, $tradePoint]);
+        $stmt->closeCursor();
         }
 
         // 2. Cut Stock in Trade
@@ -407,7 +410,7 @@ try {
         'success' => true,
         'docNo' => $docNo,
         'orderNo' => $orderNo,
-        'table' => $tableUnpadded ?: '12',
+        'table' => $tableUnpadded,
         'total' => $total,
         'message' => 'บันทึกออเดอร์ส่งเข้าห้องครัวและตัดสต็อกสำเร็จ (สถานะ S)',
     ];
@@ -430,6 +433,6 @@ try {
     if ($pdo->inTransaction()) {
         $pdo->rollBack();
     }
-    error_log("Error in api/order.php: " . $e->getMessage());
-    jsonResponse(['error' => ['code' => 'ORDER_FAILED', 'message' => 'เกิดข้อผิดพลาดในการบันทึกออเดอร์: ' . $e->getMessage()]], 500);
+    appLog('error', 'order request failed', ['error' => $e->getMessage()]);
+    jsonResponse(['error' => ['code' => 'ORDER_FAILED', 'message' => 'เกิดข้อผิดพลาดในการบันทึกออเดอร์ กรุณาลองอีกครั้ง']], 500);
 }

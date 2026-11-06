@@ -3,4 +3,5 @@
 /node_modules/
 /tools/
 /storage/
+/.phpunit.cache/
 *.log

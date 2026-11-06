@@ -4,12 +4,13 @@ declare(strict_types=1);
 require_once __DIR__ . '/../includes/functions.php';
 require_once __DIR__ . '/../includes/db.php';
 
+$branchId = trim((string)($_GET['Branch_ID'] ?? $_GET['branch'] ?? (getenv('DEFAULT_BRANCH_ID') ?: '')));
+if ($branchId === '') { jsonResponse(['error' => ['code' => 'MISSING_BRANCH', 'message' => 'กรุณาระบุรหัสสาขาใน URL หรือ DEFAULT_BRANCH_ID']], 400); }
+
 $pdo = Database::getConnection();
 if (!$pdo) {
     jsonResponse(['error' => ['code' => 'DATABASE_UNAVAILABLE', 'message' => 'ไม่สามารถเชื่อมต่อฐานข้อมูลได้']], 503);
 }
-
-$branchId = trim((string)($_GET['Branch_ID'] ?? $_GET['branch'] ?? getenv('DEFAULT_BRANCH_ID') ?? '001'));
 
 try {
     function getItemImage(string $name, string $cat): string {
@@ -66,7 +67,7 @@ try {
         }
         $stmt->closeCursor();
     } catch (Throwable $e) {
-        error_log('Recommendation ranking unavailable: ' . $e->getMessage());
+        appLog('warning', 'Recommendation ranking unavailable', ['error' => $e->getMessage()]);
     }
 
     try {
@@ -90,7 +91,7 @@ try {
         }
         $stmt->closeCursor();
     } catch (Throwable $e) {
-        error_log('Recommendation pairs unavailable: ' . $e->getMessage());
+        appLog('warning', 'Recommendation pairs unavailable', ['error' => $e->getMessage()]);
     }
 
     $categories = [];
@@ -144,6 +145,6 @@ try {
         'totalItems' => count($items),
     ]);
 } catch (Throwable $e) {
-    error_log("Error in api/menu.php: " . $e->getMessage());
+    appLog('error', 'Menu request failed', ['error' => $e->getMessage()]);
     jsonResponse(['error' => ['code' => 'MENU_UNAVAILABLE', 'message' => 'ไม่สามารถโหลดข้อมูลเมนูได้']], 503);
 }

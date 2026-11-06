@@ -4,6 +4,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/includes/db.php';
 
 require_once __DIR__ . '/includes/session.php';
+header('Cache-Control: private, no-store');
 
 $staffEmId = trim((string)($_SESSION['Em_Id'] ?? ''));
 $staffName = trim((string)($_SESSION['Em_Fullname'] ?? ''));
@@ -14,7 +15,8 @@ $queryFirstPart = explode('&', (string)($_SERVER['QUERY_STRING'] ?? ''), 2)[0];
 $shortDocNo = preg_match('/^\d+$/D', $queryFirstPart) ? $queryFirstPart : '';
 $fnDocNo = trim((string)($_GET['Fn_Doc_No'] ?? $_GET['doc'] ?? $_GET['doc_no'] ?? $_GET['bill'] ?? $shortDocNo));
 $tableNo = trim((string)($_GET['table'] ?? ''));
-$branchId = trim((string)($_GET['Branch_ID'] ?? $_GET['branch'] ?? getenv('DEFAULT_BRANCH_ID') ?? '001'));
+$branchId = trim((string)($_GET['Branch_ID'] ?? $_GET['branch'] ?? (getenv('DEFAULT_BRANCH_ID') ?: '')));
+if ($branchId === '') { http_response_code(500); exit('กรุณากำหนด DEFAULT_BRANCH_ID'); }
 
 if (!isset($initialPage)) {
     if ($fnDocNo !== '' || $tableNo !== '') {
@@ -27,7 +29,7 @@ if (!isset($initialPage)) {
 }
 $initialClosed = false;
 $initialCancelled = false;
-$guestsCount = 4;
+$guestsCount = null;
 
 if ($fnDocNo !== '' || $tableNo !== '') {
     try {
@@ -54,7 +56,7 @@ if ($fnDocNo !== '' || $tableNo !== '') {
                 }
             } elseif ($tableNo !== '') {
                 $paddedTable = str_pad($tableNo, 3, '0', STR_PAD_LEFT);
-                $autoOpen = filter_var($_GET['open'] ?? $_GET['auto_open'] ?? false, FILTER_VALIDATE_BOOLEAN);
+                $autoOpen = false;
                 if ($autoOpen && $staffEmId !== '') {
                     require_once __DIR__ . '/includes/functions.php';
                     $tablePerson = trim((string)($_GET['Table_Person'] ?? $_GET['guests'] ?? ''));
@@ -72,18 +74,6 @@ if ($fnDocNo !== '' || $tableNo !== '') {
                         if (isset($row['Table_Person']) && (int)$row['Table_Person'] > 0) {
                             $guestsCount = (int)$row['Table_Person'];
                         }
-                    } elseif ($staffEmId !== '') {
-                        // Only if staff is logged in: if table is marked open (Table_STS = 'O') in pbm_table, recover/create open bill
-                        $stmtT = $pdo->prepare("SELECT TOP 1 Table_STS FROM pbm_table WHERE (Table_ID = ? OR Table_ID = ?) AND Branch_ID = ?");
-                        $stmtT->execute([$tableNo, $paddedTable, $branchId]);
-                        $tRow = $stmtT->fetch(PDO::FETCH_ASSOC);
-                        $stmtT->closeCursor();
-                        if ($tRow && trim((string)($tRow['Table_STS'] ?? '')) === 'O') {
-                            require_once __DIR__ . '/includes/functions.php';
-                            $opened = openOrGetTableBill($pdo, $tableNo, $branchId, $staffEmId, '');
-                            $fnDocNo = $opened['docNo'];
-                            $guestsCount = $opened['guests'];
-                        }
                     }
                 }
             }
@@ -93,7 +83,7 @@ if ($fnDocNo !== '' || $tableNo !== '') {
     }
 }
 
-$displayTable = $tableNo !== '' ? $tableNo : '12';
+$displayTable = $tableNo;
 $displayDoc = $fnDocNo;
 
 require __DIR__ . '/includes/app.php';

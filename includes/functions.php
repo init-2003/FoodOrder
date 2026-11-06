@@ -1,6 +1,32 @@
 <?php
 declare(strict_types=1);
 
+if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && isset($_SERVER['HTTP_ORIGIN'], $_SERVER['HTTP_HOST'])) {
+    $origin = parse_url((string)$_SERVER['HTTP_ORIGIN']);
+    $host = parse_url('http://' . $_SERVER['HTTP_HOST']);
+    $originPort = $origin['port'] ?? (($origin['scheme'] ?? '') === 'https' ? 443 : 80);
+    $isHttps = !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off';
+    $hostPort = $host['port'] ?? ($isHttps ? 443 : 80);
+    if (!is_array($origin) || !is_array($host) || !in_array($origin['scheme'] ?? '', ['http', 'https'], true)
+        || strtolower((string)($origin['host'] ?? '')) !== strtolower((string)($host['host'] ?? '')) || $originPort !== $hostPort
+        || ($origin['scheme'] === 'https') !== $isHttps) {
+        http_response_code(403);
+        header('Content-Type: application/json; charset=utf-8');
+        exit(json_encode(['error' => ['code' => 'INVALID_ORIGIN', 'message' => 'คำขอไม่ถูกต้อง']], JSON_UNESCAPED_UNICODE));
+    }
+}
+
+if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
+    require_once __DIR__ . '/session.php';
+    $providedToken = (string)($_SERVER['HTTP_X_CSRF_TOKEN'] ?? '');
+    if ($providedToken === '' || !hash_equals((string)$_SESSION['csrf_token'], $providedToken)) {
+        http_response_code(403);
+        header('Content-Type: application/json; charset=utf-8');
+        header('Cache-Control: no-store');
+        exit(json_encode(['error' => ['code' => 'INVALID_CSRF', 'message' => 'เซสชันหมดอายุ กรุณารีเฟรชหน้าแล้วลองอีกครั้ง']], JSON_UNESCAPED_UNICODE));
+    }
+}
+
 function jsonResponse(array $data, int $status = 200): never {
     http_response_code($status);
     header('Content-Type: application/json; charset=utf-8');
@@ -26,19 +52,28 @@ function jsonResponse(array $data, int $status = 200): never {
 function openOrGetTableBill(
     PDO $pdo,
     string $tableInput,
-    string $branchId = '001',
+    string $branchId,
     string $pbUser = '',
     string|int $tablePerson = ''
 ): array {
     $rawInput = trim($tableInput);
+    if (trim($branchId) === '') throw new InvalidArgumentException('กรุณาระบุรหัสสาขา');
     if ($rawInput === '') {
-        $rawInput = trim((string)(getenv('DEFAULT_TABLE_ID') ?: '012'));
+        throw new InvalidArgumentException('กรุณาระบุหมายเลขโต๊ะ');
+    }
+    $customerStmt = $pdo->prepare('SELECT Customer_Id FROM Customer WHERE Customer_Id = ?');
+    $customerStmt->execute(['CASH']);
+    $customerId = $customerStmt->fetchColumn();
+    $customerStmt->closeCursor();
+    if ($customerId === false) {
+        throw new RuntimeException('ไม่พบลูกค้าทั่วไป CASH ในตาราง Customer');
     }
     $tablePadded = str_pad($rawInput, 3, '0', STR_PAD_LEFT);
     $tableUnpadded = ltrim($rawInput, '0') ?: $rawInput;
 
     if ($pbUser === '') {
-        $pbUser = trim((string)($_SESSION['Em_Id'] ?? getenv('POS_USER') ?: '333333'));
+        $pbUser = trim((string)($_SESSION['Em_Id'] ?? ''));
+        if ($pbUser === '') throw new InvalidArgumentException('กรุณาเข้าสู่ระบบพนักงาน');
     }
 
     $personStr = trim((string)$tablePerson);
@@ -218,7 +253,7 @@ function openOrGetTableBill(
             Table_ID, Table_Name, Pb_User, Table_Person
         ) VALUES (
             ?, ?, CONVERT(date, CAST(? AS varchar(10)), 23), CAST(? AS varchar(8)), CONVERT(datetime, CAST(? AS varchar(19)), 120),
-            '001', '0', 'CASH',
+            '001', '0', ?,
             ?, CONVERT(nvarchar(30), $tableNameHex), ?, ?
         )";
         $stmtIns = $pdo->prepare($sqlInsert);
@@ -228,6 +263,7 @@ function openOrGetTableBill(
             $date1,
             $time1,
             $datetime1,
+            $customerId,
             $tableId,
             $pbUser,
             $guestsInt,

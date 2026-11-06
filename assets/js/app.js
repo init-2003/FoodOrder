@@ -3,8 +3,8 @@ const isMobileLayout = () => window.matchMedia('(max-width: 760px), (min-width: 
 const urlParams = new URLSearchParams(window.location.search);
 const shortDoc = window.location.search.slice(1).split('&', 1)[0];
 const defaultDoc = urlParams.get('Fn_Doc_No') || urlParams.get('doc') || urlParams.get('doc_no') || urlParams.get('bill') || (/^\d+$/.test(shortDoc) ? shortDoc : '');
-const defaultTable = urlParams.get('table') || '12';
-const defaultBranch = urlParams.get('Branch_ID') || urlParams.get('branch') || '001';
+const defaultTable = urlParams.get('table') || '';
+const defaultBranch = window.appBranch;
 if (defaultDoc && /^\d+$/.test(defaultDoc) && shortDoc !== defaultDoc) {
   const remainingParams = new URLSearchParams(window.location.search);
   ['Fn_Doc_No', 'doc', 'doc_no', 'bill'].forEach(key => remainingParams.delete(key));
@@ -40,7 +40,6 @@ const SESSION_TOKEN = getCartSessionToken();
 // Each device has its own cart; bill and branch are part of the local cache key.
 const LEGACY_CART_KEY = `imdee:cart:${LEGACY_SESSION_TOKEN}:v1`;
 const CART_KEY = `imdee:session-cart:v3:${defaultBranch}:${defaultDoc || defaultTable}`;
-const DEMO_KEY = `imdee:bill-${defaultDoc || defaultTable}:v1`;
 const CATEGORY_KEY = `imdee:category:${defaultBranch}:v1`;
 const DETAIL_KEY = `imdee:detail:${defaultBranch}:${defaultDoc || defaultTable}:v1`;
 let cartLineSequence = 0;
@@ -79,9 +78,17 @@ function getStoredCart(tbl, doc, branch = defaultBranch) {
   catch { return []; }
 }
 
+function apiFetch(url, options = {}) {
+  const method = (options.method || 'GET').toUpperCase();
+  if (method !== 'GET' && method !== 'HEAD') {
+    options.headers = { ...options.headers, 'X-CSRF-Token': window.csrfToken };
+  }
+  return fetch(url, options);
+}
+
 const PosStore = {
   async cart(action, doc, branch, line = null, operationId = '') {
-    const response = await fetch('api/cart.php', {
+    const response = await apiFetch('api/cart.php', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
       body: JSON.stringify({ action, doc, branch, session_token: SESSION_TOKEN, key: line?.key, item: line, operation_id: operationId }),
@@ -95,12 +102,12 @@ const PosStore = {
     }
     return data.items;
   },
-  async menu(branch = '001') {
+  async menu(branch = defaultBranch) {
     const response = await fetch('api/menu.php?' + new URLSearchParams({ branch }), { headers: { Accept: 'application/json' } });
     if (!response.ok) throw new Error('MENU_UNAVAILABLE');
     return response.json();
   },
-  async readBill(table = '12', doc = '', branch = '001') {
+  async readBill(table = '', doc = '', branch = defaultBranch) {
     try {
       const params = new URLSearchParams();
       if (doc) params.set('Fn_Doc_No', doc);
@@ -114,11 +121,10 @@ const PosStore = {
       }
       return data;
     } catch {
-      const data = readStored(DEMO_KEY, {});
-      return { closed: data.closed === true, orders: Array.isArray(data.orders) ? data.orders : [], total: 0 };
+      throw new Error('BILL_UNAVAILABLE');
     }
   },
-  async orderHistory(table = '12', doc = '', branch = '001') {
+  async orderHistory(table = '', doc = '', branch = defaultBranch) {
     try {
       const params = new URLSearchParams();
       if (doc) params.set('Fn_Doc_No', doc);
@@ -129,11 +135,10 @@ const PosStore = {
       if (!response.ok) throw new Error('HISTORY_UNAVAILABLE');
       return response.json();
     } catch {
-      const data = readStored(DEMO_KEY, {});
-      return { orders: Array.isArray(data.orders) ? data.orders : [], total: 0 };
+      throw new Error('HISTORY_UNAVAILABLE');
     }
   },
-  async placeOrder(items, table = '12', doc = '', branch = '001', idempotencyKey = '', fromCart = false, staffId = '') {
+  async placeOrder(items, table = '', doc = '', branch = defaultBranch, idempotencyKey = '', fromCart = false, staffId = '') {
     const idemKey = idempotencyKey || ('idem_' + SESSION_TOKEN + '_' + Date.now() + '_' + Math.random().toString(36).substring(2, 8));
     const payload = {
       table: table,
@@ -153,7 +158,7 @@ const PosStore = {
         note: item.note || '',
       })),
     };
-    const response = await fetch('api/order.php', {
+    const response = await apiFetch('api/order.php', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -171,13 +176,13 @@ const PosStore = {
     }
     return result;
   },
-  async confirmOrder(doc = '', tradeId = '', branch = '001') {
+  async confirmOrder(doc = '', tradeId = '', branch = defaultBranch) {
     const payload = {
       docNo: doc,
       tradeId: tradeId || '',
       branch: branch,
     };
-    const response = await fetch('api/confirm-order.php', {
+    const response = await apiFetch('api/confirm-order.php', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -191,14 +196,14 @@ const PosStore = {
     }
     return result;
   },
-  async openTable(table = '12', guests = '', branch = '001', staffId = '') {
+  async openTable(table = '', guests = '', branch = defaultBranch, staffId = '') {
     const payload = {
       TableID: table,
       Table_Person: guests,
       Branch_ID: branch,
       Pb_User: staffId,
     };
-    const response = await fetch('api/open-table.php', {
+    const response = await apiFetch('api/open-table.php', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -213,7 +218,7 @@ const PosStore = {
     return result;
   },
   async login(username, password, remember) {
-    const response = await fetch('api/auth.php', {
+    const response = await apiFetch('api/auth.php', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
       body: JSON.stringify({ action: 'login', username, password, remember }),
@@ -225,7 +230,7 @@ const PosStore = {
     return result;
   },
   async logout() {
-    const response = await fetch('api/auth.php', {
+    const response = await apiFetch('api/auth.php', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
       body: JSON.stringify({ action: 'logout' }),
@@ -236,7 +241,7 @@ const PosStore = {
     const response = await fetch('api/auth.php?action=me', { headers: { Accept: 'application/json' } });
     return response.json().catch(() => ({ authenticated: false, staff: null }));
   },
-  async listTables(branch = '001') {
+  async listTables(branch = defaultBranch) {
     const params = new URLSearchParams();
     if (branch) params.set('Branch_ID', branch);
     const response = await fetch(`api/tables.php?${params.toString()}`, { headers: { Accept: 'application/json' } });
@@ -290,7 +295,7 @@ document.addEventListener('alpine:init', () => {
       docNo: activeDoc,
       branch: defaultBranch,
       tableName: 'โต๊ะ ' + activeTable,
-      guests: 4,
+      guests: null,
       docSts: 0,
       docStsDesc: 'เปิดบิล',
       isCancelled: Boolean(initialCancelled),
@@ -423,7 +428,7 @@ document.addEventListener('alpine:init', () => {
             this.cart = getStoredCart(this.table, this.docNo, this.branch);
             this.cartReady = false;
             await this.syncBill();
-            if (!this.closed && this.docNo && this.mode !== 'demo') {
+            if (!this.closed && this.docNo) {
               await this.syncRemoteCart();
             } else {
               this.cartReady = true;
@@ -641,8 +646,7 @@ document.addEventListener('alpine:init', () => {
             this.cart = getStoredCart(this.table, this.docNo, this.branch);
             this.cartReady = false;
             this.syncBill().then(() => {
-              if (this.mode === 'demo') this.cartReady = true;
-              else if (!this.closed && this.docNo) this.syncRemoteCart();
+              if (!this.closed && this.docNo) this.syncRemoteCart();
             });
           }
           if (this.page === 'tables' && pageChanged) this.loadTables();
@@ -650,12 +654,6 @@ document.addEventListener('alpine:init', () => {
         };
         window.addEventListener('popstate', restoreHistoryRoute);
         window.addEventListener('hashchange', restoreHistoryRoute);
-        window.addEventListener('storage', event => {
-          if (event.key === DEMO_KEY || event.key === null) {
-            this.syncBill();
-            if (this.closed) { this.closeDetail(); this.navigate('closed'); }
-          }
-        });
         window.addEventListener('keydown', event => {
           if (event.key === '/' && !this.detailOpen && !this.closed && !['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) {
             event.preventDefault(); this.openMenuSearch();
@@ -778,9 +776,7 @@ document.addEventListener('alpine:init', () => {
           }
           return [line];
         }) : [];
-        if (this.mode === 'demo') {
-          this.cartReady = true;
-        } else if (!this.closed && this.docNo) {
+        if (!this.closed && this.docNo) {
           await this.syncRemoteCart();
         } else if (!this.closed && !this.docNo) {
           this.cartReady = true;
@@ -906,7 +902,7 @@ async syncBill() {
           if (bill.docNo) this.docNo = bill.docNo;
           if (bill.table) this.table = bill.table;
           if (bill.tableName) this.tableName = bill.tableName;
-          if (bill.guests) this.guests = bill.guests;
+          this.guests = bill.guests || null;
           this.docSts = typeof bill.docSts === 'number' ? bill.docSts : 0;
           this.docStsDesc = bill.docStsDesc || (this.docSts === 0 ? 'เปิดบิล' : this.docSts === 1 ? 'ออกใบเสร็จแล้ว' : 'ยกเลิก');
           this.canOrder = bill.canOrder !== false && this.docSts === 0;
@@ -947,9 +943,7 @@ async syncBill() {
         }
       } catch (err) {
         console.error('syncBill error:', err);
-        const data = readStored(DEMO_KEY, {});
-        this.orders = data.orders || [];
-        this.closed = data.closed === true;
+        this.billError = 'ไม่สามารถเชื่อมต่อข้อมูลบิลได้ กรุณาลองอีกครั้ง';
       }
     },
     persistCart() {
@@ -1496,7 +1490,7 @@ async syncBill() {
         await this.alert({ icon: 'warning', title: 'ยังยืนยันผลการสั่งไม่ได้', text: 'กรุณาตรวจสอบรายการที่สั่งหรือติดต่อพนักงานก่อนสั่งซ้ำ' });
         return;
       }
-      if (this.mode !== 'demo' && !this.cartReady) {
+      if (!this.cartReady) {
         await this.alert({ icon: 'warning', title: this.language === 'en' ? 'Cart unavailable' : 'ยังเชื่อมต่อตะกร้าไม่ได้', text: this.language === 'en' ? 'Please reconnect and check your cart first.' : 'กรุณาลองเชื่อมต่อตะกร้าอีกครั้งก่อนสั่งอาหาร' });
         return;
       }
@@ -1614,24 +1608,6 @@ async syncBill() {
       }
     },
     staffHelp() { this.alert({ title: 'ให้เราช่วยดูแลมื้อนี้', text: this.language === 'en' ? 'Please ask a staff member for assistance.' : 'หากต้องการความช่วยเหลือ กรุณาแจ้งพนักงานได้ทันที', icon: 'info', confirmButtonText: 'เข้าใจแล้ว' }); },
-    async demoInfo() {
-      const result = await this.alert({
-        title: 'สถานะการเชื่อมต่อ POS',
-        text: this.language === 'en'
-          ? `POS connection: ${this.mode === 'live' ? 'online' : 'offline'}\nTable ${this.table} · Bill: ${this.docNo || 'none'}\nStatus: ${this.t(this.docStsDesc)}`
-          : `ระบบเชื่อมต่อกับฐานข้อมูล SQL Server (${this.mode === 'live' ? 'ออนไลน์' : 'ออฟไลน์'})\nโต๊ะ ${this.table} · บิล: ${this.docNo || 'ยังไม่มี'}\nสถานะ: ${this.docStsDesc}`,
-        icon: 'info',
-        confirmButtonText: 'รับทราบ'
-      });
-    },
-    async resetDemo() {
-      const result = await this.alert({ title: 'ล้างตะกร้าปัจจุบัน?', text: 'รายการที่อยู่ในตะกร้าของคุณจะถูกล้าง', icon: 'question', showCancelButton: true, confirmButtonText: 'ล้างตะกร้า', cancelButtonText: 'ยกเลิก' });
-      if (!result.isConfirmed) return;
-      this.cart = [];
-      this.persistCart();
-      await this.syncBill();
-      this.navigate('menu');
-    },
   };
 });
 });

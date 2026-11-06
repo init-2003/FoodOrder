@@ -2,7 +2,24 @@
   "name": "imdee/qr-ordering",
   "description": "Mobile-first QR ordering frontend, with a future SQL Server POS adapter",
   "type": "project",
-  "require": { "php": "^8.5" },
+  "require": { "php": "^8.5",
+    "monolog/monolog": "^3.12",
+    "symfony/validator": "^8.1",
+    "symfony/rate-limiter": "^8.1",
+    "symfony/cache": "^8.1",
+    "vlucas/phpdotenv": "^5.8",
+    "symfony/lock": "^8.1" },
   "suggest": { "ext-pdo_sqlsrv": "Required for the future SQL Server integration" },
-  "scripts": { "serve": "php -S 127.0.0.1:8080 router.php" }
+  "scripts": { "serve": "php -S 127.0.0.1:8080 router.php",
+    "test": "pest",
+    "analyse": "phpstan analyse --no-progress" },
+  "require-dev": {
+    "pestphp/pest": "*",
+    "phpstan/phpstan": "^2.3"
+  },
+  "config": {
+    "allow-plugins": {
+      "pestphp/pest-plugin": true
+    }
+  }
 }

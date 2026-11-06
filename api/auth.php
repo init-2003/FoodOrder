@@ -16,6 +16,7 @@ if (!is_array($data)) {
 $action = trim((string)($data['action'] ?? $_POST['action'] ?? $_GET['action'] ?? ($method === 'GET' ? 'me' : 'login')));
 
 if ($action === 'logout') {
+    if ($method !== 'POST') jsonResponse(['error' => ['code' => 'METHOD_NOT_ALLOWED', 'message' => 'Method not allowed']], 405);
     unset(
         $_SESSION['Em_Id'],
         $_SESSION['Em_Fullname'],
@@ -93,42 +94,14 @@ if ($username === '' || $password === '') {
     ], 400);
 }
 
-$posMode = getenv('POS_MODE') ?: 'live';
-if ($posMode === 'demo') {
-    $demoUsers = [
-        'admin' => ['pass' => 'admin2', 'emId' => '333333', 'name' => 'Administrator (โหมดทดลอง)', 'role' => 'Administrator'],
-        'staff' => ['pass' => '1234', 'emId' => '640048', 'name' => 'พนักงานรับออเดอร์ (โหมดทดลอง)', 'role' => 'Staff'],
-    ];
-    $key = strtolower($username);
-    if (isset($demoUsers[$key]) && $demoUsers[$key]['pass'] === $password) {
-        $u = $demoUsers[$key];
-        establishStaffSession($remember);
-        $_SESSION['Em_Id'] = $u['emId'];
-        $_SESSION['Em_Fullname'] = $u['name'];
-        $_SESSION['SUser'] = $username;
-        $_SESSION['Status'] = $u['role'];
-
-        jsonResponse([
-            'success' => true,
-            'authenticated' => true,
-            'mode' => 'demo',
-            'staff' => [
-                'emId' => $u['emId'],
-                'name' => $u['name'],
-                'username' => $username,
-                'role' => $u['role'],
-            ],
-        ]);
+if (class_exists(\Symfony\Component\Validator\Validation::class)) {
+    $validator = \Symfony\Component\Validator\Validation::createValidator();
+    $limits = [new \Symfony\Component\Validator\Constraints\Length(max: 50)];
+    if (count($validator->validate($username, $limits)) || count($validator->validate($password, $limits))) {
+        jsonResponse(['success' => false, 'error' => ['code' => 'INVALID_CREDENTIALS', 'message' => 'ชื่อผู้ใช้งานหรือรหัสผ่านไม่ถูกต้อง']], 400);
     }
-
-    jsonResponse([
-        'success' => false,
-        'error' => [
-            'code' => 'INVALID_CREDENTIALS',
-            'message' => 'ชื่อผู้ใช้งานหรือรหัสผ่านไม่ถูกต้อง',
-        ],
-    ], 401);
 }
+
 
 $pdo = Database::getConnection();
 if (!$pdo) {
@@ -139,6 +112,27 @@ if (!$pdo) {
             'message' => 'ไม่สามารถเชื่อมต่อฐานข้อมูล SQL Server ได้',
         ],
     ], 503);
+}
+
+if (!class_exists(\Symfony\Component\RateLimiter\RateLimiterFactory::class) || !class_exists(\Symfony\Component\Validator\Validation::class)) {
+    appLog('error', 'Authentication dependencies unavailable');
+    jsonResponse(['success' => false, 'error' => ['code' => 'AUTH_UNAVAILABLE', 'message' => 'ไม่สามารถเข้าสู่ระบบได้ กรุณาติดต่อผู้ดูแลระบบ']], 503);
+}
+$loginLimiter = null;
+if (class_exists(\Symfony\Component\RateLimiter\RateLimiterFactory::class)) {
+    try {
+        require_once __DIR__ . '/../includes/login_limiter.php';
+        $clientIp = (string)($_SERVER['REMOTE_ADDR'] ?? 'unknown');
+        $loginLimiter = createLoginLimiter($clientIp, dirname(__DIR__) . '/storage/rate-limit');
+        $limit = $loginLimiter->consume();
+        if (!$limit->isAccepted()) {
+            header('Retry-After: ' . max(1, $limit->getRetryAfter()->getTimestamp() - time()));
+            jsonResponse(['success' => false, 'error' => ['code' => 'TOO_MANY_ATTEMPTS', 'message' => 'พยายามเข้าสู่ระบบบ่อยเกินไป กรุณาลองใหม่ภายหลัง']], 429);
+        }
+    } catch (Throwable $e) {
+        appLog('error', 'Login rate limiter unavailable', ['error' => $e->getMessage()]);
+        jsonResponse(['success' => false, 'error' => ['code' => 'AUTH_UNAVAILABLE', 'message' => 'ไม่สามารถเข้าสู่ระบบได้ กรุณาลองใหม่ภายหลัง']], 503);
+    }
 }
 
 try {
@@ -193,6 +187,7 @@ try {
     $sUser = trim(Database::decodeThai($row['SUser'] ?? null)) ?: $username;
     $role = trim(Database::decodeThai($row['Status'] ?? null)) ?: 'Staff';
 
+    if ($loginLimiter !== null) $loginLimiter->reset();
     establishStaffSession($remember);
     $_SESSION['Em_Id'] = $emId;
     $_SESSION['Em_Fullname'] = $displayName;
@@ -213,12 +208,12 @@ try {
         ],
     ]);
 } catch (Throwable $e) {
-    error_log('Error in api/auth.php: ' . $e->getMessage());
+    appLog('error', 'auth request failed', ['error' => $e->getMessage()]);
     jsonResponse([
         'success' => false,
         'error' => [
             'code' => 'AUTH_ERROR',
-            'message' => 'เกิดข้อผิดพลาดในการเข้าสู่ระบบ: ' . $e->getMessage(),
+            'message' => 'เกิดข้อผิดพลาดในการเข้าสู่ระบบ กรุณาลองอีกครั้ง',
         ],
     ], 500);
 }

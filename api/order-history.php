@@ -4,24 +4,15 @@ declare(strict_types=1);
 require_once __DIR__ . '/../includes/functions.php';
 require_once __DIR__ . '/../includes/db.php';
 
-$posMode = getenv('POS_MODE') ?: 'live';
 $fnDocNo = trim((string)($_GET['Fn_Doc_No'] ?? $_GET['doc'] ?? $_GET['doc_no'] ?? $_GET['bill'] ?? ''));
-$branchId = trim((string)($_GET['Branch_ID'] ?? $_GET['branch'] ?? getenv('DEFAULT_BRANCH_ID') ?? '001'));
+$branchId = trim((string)($_GET['Branch_ID'] ?? $_GET['branch'] ?? (getenv('DEFAULT_BRANCH_ID') ?: '')));
+if ($branchId === '') { jsonResponse(['error' => ['code' => 'MISSING_BRANCH', 'message' => 'กรุณาระบุรหัสสาขาใน URL หรือ DEFAULT_BRANCH_ID']], 400); }
 $tableInput = trim((string)($_GET['table'] ?? ''));
 
-if ($posMode === 'demo') {
-    jsonResponse([
-        'mode' => 'demo',
-        'pendingItems' => [],
-        'pendingTotal' => 0,
-        'orders' => [],
-        'confirmedTotal' => 0,
-        'total' => 0,
-        'docSts' => 0,
-        'closed' => false,
-        'cancelled' => false
-    ]);
+if ($fnDocNo === '' && $tableInput === '') {
+    jsonResponse(['error' => ['code' => 'MISSING_TABLE_OR_BILL', 'message' => 'กรุณาระบุหมายเลขโต๊ะหรือเลขที่บิล']], 400);
 }
+
 
 $pdo = Database::getConnection();
 if (!$pdo) {
@@ -67,7 +58,7 @@ try {
         $stmt->closeCursor();
     } else {
         // Query by table (prefer Doc_Sts = 0 open bill, then latest)
-        $tableTarget = $tableInput !== '' ? $tableInput : (getenv('DEFAULT_TABLE_ID') ?: '012');
+        $tableTarget = $tableInput;
         $tablePadded = str_pad((string)$tableTarget, 3, '0', STR_PAD_LEFT);
         $tableUnpadded = ltrim((string)$tableTarget, '0') ?: $tableTarget;
 
@@ -121,7 +112,7 @@ try {
     foreach ($rawConfirmed as $cRow) {
         $tName = Database::decodeThai($cRow['Trade_Name']);
         $groupPro = Database::decodeThai($cRow['Group_Pro']);
-        $unitName = Database::decodeThai($cRow['Unit_Name']) ?: 'จาน';
+        $unitName = Database::decodeThai($cRow['Unit_Name']);
         $note = trim($groupPro, " \t\n\r\0\x0B()");
         $price = (float)$cRow['Sale_Price'];
         $qty = (int)$cRow['Qty'];
@@ -168,10 +159,10 @@ try {
         'total' => $finalTotal,
     ]);
 } catch (Throwable $e) {
-    error_log("Error in api/order-history.php: " . $e->getMessage());
+    appLog('error', 'order-history request failed', ['error' => $e->getMessage()]);
     jsonResponse([
         'mode' => 'error',
-        'error' => $e->getMessage(),
+        'error' => 'ไม่สามารถโหลดรายการที่สั่งได้ กรุณาลองอีกครั้ง',
         'pendingItems' => [],
         'pendingTotal' => 0,
         'orders' => [],

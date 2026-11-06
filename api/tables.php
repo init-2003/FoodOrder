@@ -18,34 +18,9 @@ if ($sessionEmId === '') {
     ], 401);
 }
 
-$branchId = trim((string)($_GET['Branch_ID'] ?? $_GET['branch'] ?? getenv('DEFAULT_BRANCH_ID') ?? '001'));
-$posMode = getenv('POS_MODE') ?: 'live';
+$branchId = trim((string)($_GET['Branch_ID'] ?? $_GET['branch'] ?? (getenv('DEFAULT_BRANCH_ID') ?: '')));
+if ($branchId === '') { jsonResponse(['error' => ['code' => 'MISSING_BRANCH', 'message' => 'กรุณาระบุรหัสสาขาใน URL หรือ DEFAULT_BRANCH_ID']], 400); }
 
-if ($posMode === 'demo') {
-    $demoTables = [];
-    for ($i = 1; $i <= 14; $i++) {
-        $id = str_pad((string)$i, 3, '0', STR_PAD_LEFT);
-        $isOpen = in_array($i, [2, 4, 12], true);
-        $demoTables[] = [
-            'id' => $id,
-            'number' => (string)$i,
-            'name' => 'โต๊ะ ' . $i,
-            'status' => $isOpen ? 'O' : '',
-            'isOpen' => $isOpen,
-            'statusText' => $isOpen ? 'เปิดบิลแล้ว' : 'ว่าง',
-            'docNo' => $isOpen ? ('DEMO-' . $id) : '',
-            'total' => $isOpen ? 245.0 : 0.0,
-            'guests' => null,
-            'openedAt' => $isOpen ? date('H:i') : '',
-        ];
-    }
-    jsonResponse([
-        'success' => true,
-        'mode' => 'demo',
-        'branch' => $branchId,
-        'tables' => $demoTables,
-    ]);
-}
 
 $pdo = Database::getConnection();
 if (!$pdo) {
@@ -134,12 +109,12 @@ try {
         'tables' => $tables,
     ]);
 } catch (Throwable $e) {
-    error_log('Error in api/tables.php: ' . $e->getMessage());
+    appLog('error', 'tables request failed', ['error' => $e->getMessage()]);
     jsonResponse([
         'success' => false,
         'error' => [
             'code' => 'TABLES_ERROR',
-            'message' => 'ไม่สามารถดึงข้อมูลโต๊ะได้: ' . $e->getMessage(),
+            'message' => 'ไม่สามารถดึงข้อมูลโต๊ะได้ กรุณาลองอีกครั้ง',
         ],
         'tables' => [],
     ], 500);

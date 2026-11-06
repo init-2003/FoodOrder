@@ -22,6 +22,17 @@ if (!in_array($action, ['list', 'upsert', 'delete'], true)
 $key = trim((string)($data['key'] ?? ''));
 $operation = trim((string)($data['operation_id'] ?? ''));
 $itemInput = is_array($data['item'] ?? null) ? $data['item'] : [];
+if ($action === 'upsert' && class_exists(\Symfony\Component\Validator\Validation::class)) {
+    $validator = \Symfony\Component\Validator\Validation::createValidator();
+    $itemId = trim((string)($itemInput['id'] ?? ''));
+    $quantity = filter_var($itemInput['qty'] ?? null, FILTER_VALIDATE_INT);
+    $note = trim((string)($itemInput['note'] ?? ''));
+    if (count($validator->validate($itemId, [new \Symfony\Component\Validator\Constraints\NotBlank(), new \Symfony\Component\Validator\Constraints\Length(max: 35)]))
+        || $quantity === false || count($validator->validate($quantity, [new \Symfony\Component\Validator\Constraints\Range(min: 1, max: 99)]))
+        || count($validator->validate($note, [new \Symfony\Component\Validator\Constraints\Length(max: 200)]))) {
+        jsonResponse(['error' => ['code' => 'INVALID_ITEM', 'message' => 'ข้อมูลรายการอาหารไม่ถูกต้อง']], 400);
+    }
+}
 $operationHash = hash('sha256', json_encode([$action, $key, $itemInput['id'] ?? null, $itemInput['qty'] ?? null, $itemInput['note'] ?? null, $itemInput['revision'] ?? null], JSON_THROW_ON_ERROR));
 if ($action !== 'list' && !preg_match('/^[A-Za-z0-9_-]{1,128}$/D', $key)) {
     jsonResponse(['error' => ['code' => 'INVALID_CART_KEY', 'message' => 'รหัสรายการไม่ถูกต้อง']], 400);
@@ -30,14 +41,14 @@ if ($action !== 'list' && !preg_match('/^[A-Za-z0-9_-]{1,128}$/D', $operation)) 
     jsonResponse(['error' => ['code' => 'INVALID_OPERATION', 'message' => 'รหัสคำขอไม่ถูกต้อง']], 400);
 }
 $pdo = Database::getConnection();
-if (!$pdo || getenv('POS_MODE') === 'demo') {
+if (!$pdo) {
     jsonResponse(['error' => ['code' => 'DATABASE_UNAVAILABLE', 'message' => 'ไม่สามารถเชื่อมต่อฐานข้อมูลสำหรับตะกร้าได้']], 503);
 }
 
 try {
     $pdo->beginTransaction();
     // Lock the bill first for every write, in the same order as order.php.
-    $sqlBill = "SELECT Doc_Sts, CONVERT(varbinary(max), Table_Name) AS Table_Name FROM Fnt_Header"
+    $sqlBill = "SELECT Doc_Sts, Customer_Id, Pb_User, CONVERT(varbinary(max), Table_Name) AS Table_Name FROM Fnt_Header"
         . ($action === 'list' ? '' : ' WITH (UPDLOCK, ROWLOCK)')
         . " WHERE Fn_Doc_No = ? AND Branch_ID = ?";
     $stmt = $pdo->prepare($sqlBill);
@@ -123,7 +134,7 @@ try {
             $points = (int)$product['Trade_Point'];
             $foodType = (string)$product['Food_Type'];
             $now = date('Y-m-d H:i:s');
-            $user = trim((string)(getenv('POS_USER') ?: '333333'));
+            $user = trim((string)($bill['Pb_User'] ?? ''));
             if ($existing) {
                 $stmt = $pdo->prepare("UPDATE dbo.Fnt_Detail SET Qty=?, Qty_Cut_Stock=?, Trade_Name=CONVERT(nvarchar(200), $nameHex), Group_Pro=CONVERT(nvarchar(50), $groupHex), Sale_Price=?, Cost_Price=?, Pb_Now=? WHERE ID_NO=? AND Branch_ID=? AND Fn_Doc_No=? AND Food_Que_STS=''");
                 $stmt->execute([$qty, $qtyCut, $price, $cost, $now, $existing['Detail_ID'], $branch, $docNo]);
@@ -134,8 +145,8 @@ try {
                 $stmt->closeCursor();
             } else {
                 $tableHex = Database::hexThai(Database::decodeThai($bill['Table_Name']));
-                $stmt = $pdo->prepare("INSERT INTO dbo.Fnt_Detail (Branch_ID, Fn_Doc_No, Fn_Doc_Date, Fn_Doc_Date_Time, Table_Name, Customer_ID, Trade_ID, Trade_Name, Qty, Qty_Cut_Stock, Unit_Name, Type_Name, Food_Type, Group_Pro, Cost_Price, Sale_Price, Pb_User, Pb_Now, Print_STS, Food_Que_STS, Trade_Point) OUTPUT INSERTED.ID_NO VALUES (?, ?, ?, ?, CONVERT(nvarchar(30), $tableHex), 'CASH', ?, CONVERT(nvarchar(200), $nameHex), ?, ?, CONVERT(nvarchar(20), $unitHex), CONVERT(nvarchar(50), $typeHex), ?, CONVERT(nvarchar(50), $groupHex), ?, ?, ?, ?, '', '', ?)");
-                $stmt->execute([$branch, $docNo, date('Y-m-d 00:00:00'), $now, $tradeId, $qty, $qtyCut, $foodType, $cost, $price, $user, $now, $points]);
+                $stmt = $pdo->prepare("INSERT INTO dbo.Fnt_Detail (Branch_ID, Fn_Doc_No, Fn_Doc_Date, Fn_Doc_Date_Time, Table_Name, Customer_ID, Trade_ID, Trade_Name, Qty, Qty_Cut_Stock, Unit_Name, Type_Name, Food_Type, Group_Pro, Cost_Price, Sale_Price, Pb_User, Pb_Now, Print_STS, Food_Que_STS, Trade_Point) OUTPUT INSERTED.ID_NO VALUES (?, ?, ?, ?, CONVERT(nvarchar(30), $tableHex), ?, ?, CONVERT(nvarchar(200), $nameHex), ?, ?, CONVERT(nvarchar(20), $unitHex), CONVERT(nvarchar(50), $typeHex), ?, CONVERT(nvarchar(50), $groupHex), ?, ?, ?, ?, '', '', ?)");
+                $stmt->execute([$branch, $docNo, date('Y-m-d 00:00:00'), $now, $bill['Customer_Id'], $tradeId, $qty, $qtyCut, $foodType, $cost, $price, $user, $now, $points]);
                 $inserted = $stmt->fetch(PDO::FETCH_ASSOC);
                 $stmt->closeCursor();
                 if (!$inserted || !isset($inserted['ID_NO'])) throw new RuntimeException('Could not read inserted detail ID');
@@ -157,6 +168,6 @@ try {
     jsonResponse(['success' => true, 'items' => $items]);
 } catch (Throwable $e) {
     if ($pdo->inTransaction()) $pdo->rollBack();
-    error_log('Cart error: ' . $e->getMessage());
+    appLog('error', 'cart request failed', ['error' => $e->getMessage()]);
     jsonResponse(['error' => ['code' => 'CART_FAILED', 'message' => 'บันทึกตะกร้าไม่สำเร็จ กรุณาลองอีกครั้ง']], 500);
 }

@@ -6,6 +6,10 @@ require_once __DIR__ . '/../includes/db.php';
 
 require_once __DIR__ . '/../includes/session.php';
 
+if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
+    jsonResponse(['error' => ['code' => 'METHOD_NOT_ALLOWED', 'message' => 'Method not allowed']], 405);
+}
+
 $rawInput = file_get_contents('php://input');
 $jsonData = json_decode($rawInput ?: '{}', true);
 if (!is_array($jsonData)) {
@@ -45,9 +49,9 @@ $branchId = trim((string)(
     ?? $_POST['branch']
     ?? $_GET['Branch_ID']
     ?? $_GET['branch']
-    ?? getenv('DEFAULT_BRANCH_ID')
-    ?? '001'
+    ?? (getenv('DEFAULT_BRANCH_ID') ?: '')
 ));
+if ($branchId === '') { jsonResponse(['error' => ['code' => 'MISSING_BRANCH', 'message' => 'กรุณาระบุรหัสสาขาใน URL หรือ DEFAULT_BRANCH_ID']], 400); }
 
 $tablePerson = trim((string)(
     $jsonData['Table_Person']
@@ -88,31 +92,6 @@ if ($tableInput === '') {
     ], 400);
 }
 
-$posMode = getenv('POS_MODE') ?: 'live';
-if ($posMode === 'demo') {
-    $tablePadded = str_pad($tableInput, 3, '0', STR_PAD_LEFT);
-    $tableUnpadded = ltrim($tableInput, '0') ?: $tableInput;
-    $demoDocNo = $fnDocNoInput !== '' ? $fnDocNoInput : ('DEMO-' . $tablePadded);
-
-    $_SESSION['Table_ID'] = $tablePadded;
-    $_SESSION['Table_Name'] = 'โต๊ะ ' . $tableUnpadded;
-    $_SESSION['Fn_Doc_No'] = $demoDocNo;
-
-    jsonResponse([
-        'success' => true,
-        'result' => 'OK',
-        'mode' => 'demo',
-        'created' => true,
-        'docNo' => $demoDocNo,
-        'Fn_Doc_No' => $demoDocNo,
-        'table' => $tableUnpadded,
-        'Table_ID' => $tablePadded,
-        'tableName' => 'โต๊ะ ' . $tableUnpadded,
-        'Table_Name' => 'โต๊ะ ' . $tableUnpadded,
-        'Table_STS' => 'O',
-        'guests' => (int)$tablePerson > 0 ? (int)$tablePerson : null,
-    ]);
-}
 
 $pdo = Database::getConnection();
 if (!$pdo) {
@@ -148,13 +127,13 @@ try {
         'guests' => $opened['guests'],
     ]);
 } catch (Throwable $e) {
-    error_log('Error in api/open-table.php: ' . $e->getMessage());
+    appLog('error', 'open-table request failed', ['error' => $e->getMessage()]);
     jsonResponse([
         'success' => false,
         'result' => 'Error',
         'error' => [
             'code' => 'OPEN_TABLE_FAILED',
-            'message' => 'ไม่สามารถเปิดโต๊ะได้: ' . $e->getMessage(),
+            'message' => 'ไม่สามารถเปิดโต๊ะได้ กรุณาลองอีกครั้ง',
         ],
     ], 500);
 }
