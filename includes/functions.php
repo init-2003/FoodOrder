@@ -44,6 +44,10 @@ function jsonResponse(array $data, int $status = 200): never {
  *
  * @return array{docNo: string, tableId: string, tableUnpadded: string, tableName: string, tableSts: string, orderNo: int, guests: int, created: bool}
  */
+function getHashToAlphabet(string $text): string {
+    return strtr(hash('sha256', $text), '0123456789abcdef', 'abcdefghijklmnop');
+}
+
 function openOrGetTableBill(
     PDO $pdo,
     string $tableInput,
@@ -108,7 +112,8 @@ function openOrGetTableBill(
         if ($tableSts === 'O') {
             $stmtBill = $pdo->prepare(
                 "SELECT TOP 1 Fn_Doc_No, Doc_Sts, Fn_Order_No, Table_ID,
-                        CONVERT(varbinary(max), Table_Name) AS Table_Name, Table_Person
+                        CONVERT(varbinary(max), Table_Name) AS Table_Name, Table_Person,
+                        CONVERT(varbinary(max), Fn_Qrcode_Order) AS Fn_Qrcode_Order
                  FROM Fnt_Header b WITH (UPDLOCK, ROWLOCK)
                  WHERE (b.Table_ID = ? OR b.Table_ID = ? OR b.Table_ID = ?)
                    AND b.Doc_Sts = 0
@@ -138,6 +143,7 @@ function openOrGetTableBill(
 
                 return [
                     'docNo' => $docNo,
+                    'qrCodeOrder' => Database::decodeThai($openBill['Fn_Qrcode_Order'] ?? null),
                     'tableId' => $billTableId,
                     'tableUnpadded' => ltrim($billTableId, '0') ?: $billTableId,
                     'tableName' => $tableName,
@@ -151,7 +157,8 @@ function openOrGetTableBill(
             // Even if pbm_table is not 'O' (or table not found in pbm_table), check if an open bill already exists
             $stmtBill = $pdo->prepare(
                 "SELECT TOP 1 Fn_Doc_No, Doc_Sts, Fn_Order_No, Table_ID,
-                        CONVERT(varbinary(max), Table_Name) AS Table_Name, Table_Person
+                        CONVERT(varbinary(max), Table_Name) AS Table_Name, Table_Person,
+                        CONVERT(varbinary(max), Fn_Qrcode_Order) AS Fn_Qrcode_Order
                  FROM Fnt_Header b WITH (UPDLOCK, ROWLOCK)
                  WHERE (b.Table_ID = ? OR b.Table_ID = ? OR b.Table_ID = ?)
                    AND b.Doc_Sts = 0
@@ -182,6 +189,7 @@ function openOrGetTableBill(
 
                 return [
                     'docNo' => $docNo,
+                    'qrCodeOrder' => Database::decodeThai($openBill['Fn_Qrcode_Order'] ?? null),
                     'tableId' => $billTableId,
                     'tableUnpadded' => ltrim($billTableId, '0') ?: $billTableId,
                     'tableName' => $tableName,
@@ -210,6 +218,7 @@ function openOrGetTableBill(
         $runYr = trim((string)($ctrlRow['PB_RUN_YR'] ?? ''));
         $runNo = trim((string)($ctrlRow['PB_RUN_NO'] ?? '1'));
         $fnDocNo = $runYr . str_pad($runNo, 6, '0', STR_PAD_LEFT);
+        $qrCodeOrder = getHashToAlphabet($fnDocNo);
 
         // Update running number in Pbm_ctrl
         $stmtUpdCtrl = $pdo->prepare(
@@ -245,11 +254,11 @@ function openOrGetTableBill(
         $sqlInsert = "INSERT INTO Fnt_Header (
             Branch_ID, Fn_Doc_No, Fn_Doc_Date, Fn_Doc_Time, Fn_Doc_Date_Time,
             Fn_Doc_Type, Doc_Sts, Customer_Id,
-            Table_ID, Table_Name, Pb_User, Table_Person
+            Table_ID, Table_Name, Pb_User, Table_Person, Fn_Qrcode_Order
         ) VALUES (
             ?, ?, CONVERT(date, CAST(? AS varchar(10)), 23), CAST(? AS varchar(8)), CONVERT(datetime, CAST(? AS varchar(19)), 120),
             '001', '0', ?,
-            ?, CONVERT(nvarchar(30), $tableNameHex), ?, ?
+            ?, CONVERT(nvarchar(30), $tableNameHex), ?, ?, CONVERT(nvarchar(200), CAST(? AS varchar(200)))
         )";
         $stmtIns = $pdo->prepare($sqlInsert);
         $stmtIns->execute([
@@ -262,6 +271,7 @@ function openOrGetTableBill(
             $tableId,
             $pbUser,
             $guestsInt,
+            $qrCodeOrder,
         ]);
         $stmtIns->closeCursor();
 
@@ -271,6 +281,7 @@ function openOrGetTableBill(
 
         return [
             'docNo' => $fnDocNo,
+            'qrCodeOrder' => $qrCodeOrder,
             'tableId' => $tableId,
             'tableUnpadded' => ltrim($tableId, '0') ?: $tableId,
             'tableName' => $tableName,

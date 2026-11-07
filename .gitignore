@@ -1,7 +1,10 @@
 /.env
 /vendor/
 /node_modules/
-/assets/uploads/
+/assets/uploads/*
+!/assets/uploads/products/
+/assets/uploads/products/*
+!/assets/uploads/products/.gitkeep
 /tools/
 /storage/*
 !/storage/.gitkeep

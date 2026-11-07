@@ -119,6 +119,7 @@ try {
         'created' => $opened['created'],
         'docNo' => $opened['docNo'],
         'Fn_Doc_No' => $opened['docNo'],
+        'Fn_Qrcode_Order' => $opened['qrCodeOrder'],
         'table' => $opened['tableUnpadded'],
         'Table_ID' => $opened['tableId'],
         'tableName' => $opened['tableName'],
