@@ -1,10 +1,10 @@
 /.env
 /vendor/
 /node_modules/
-/assets/uploads/*
-!/assets/uploads/products/
-/assets/uploads/products/*
-!/assets/uploads/products/.gitkeep
+/public/assets/uploads/*
+!/public/assets/uploads/products/
+/public/assets/uploads/products/*
+!/public/assets/uploads/products/.gitkeep
 /tools/
 /storage/*
 !/storage/.gitkeep
@@ -14,5 +14,12 @@
 !/storage/idempotency/
 /storage/idempotency/*
 !/storage/idempotency/.gitkeep
+!/storage/uploads/
+/storage/uploads/*
+!/storage/uploads/products/
+/storage/uploads/products/*
+!/storage/uploads/products/.gitkeep
 /.phpunit.cache/
 *.log
+
+/assets/uploads/

@@ -1,8 +1,0 @@
-<?php
-declare(strict_types=1);
-require_once __DIR__ . '/includes/db.php';
-require_once __DIR__ . '/includes/session.php';
-if (empty($_SESSION['Em_Id'])) { header('Location: ./#login'); exit; }
-header('Cache-Control: private, no-store');
-$branch = trim((string)(getenv('DEFAULT_BRANCH_ID') ?: ''));
-?><!doctype html><html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>จัดการรายการอาหาร · อันเกิม</title><link rel="stylesheet" href="assets/css/staff-images.css?v=2"></head><body><main class="shell"><?php require __DIR__ . '/includes/staff-header.php'; ?><section class="manage"><p class="eyebrow" data-i18n="จัดการเมนู">จัดการเมนู</p><h1 data-i18n="รายการอาหาร">รายการอาหาร</h1><p data-i18n="เพิ่มหรือเปลี่ยนรูปอาหารที่แสดงในเมนู">เพิ่มหรือเปลี่ยนรูปอาหารที่แสดงในเมนู</p><div class="filters"><input id="search" type="search" data-i18n-placeholder="ค้นหาชื่อหรือรหัสอาหาร" placeholder="ค้นหาชื่อหรือรหัสอาหาร" aria-label="ค้นหาชื่อหรือรหัสอาหาร"><select id="category" aria-label="หมวดหมู่"><option value="" data-i18n="ทุกหมวดหมู่">ทุกหมวดหมู่</option></select></div><p id="status" role="status" data-i18n="กำลังโหลดรายการอาหาร...">กำลังโหลดรายการอาหาร...</p><div id="items" class="items"></div></section></main><script>window.foodImagesConfig = <?= json_encode(['branch' => $branch, 'csrf' => $_SESSION['csrf_token']], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;</script><script src="assets/js/food-images.js" defer></script><script src="assets/js/staff-header.js?v=1" defer></script></body></html>

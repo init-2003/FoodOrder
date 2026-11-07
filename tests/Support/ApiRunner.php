@@ -6,16 +6,23 @@ function runApi(string $endpoint, string $method = 'GET', array $query = [], arr
 {
     $root = dirname(__DIR__, 2);
     $tmp = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'ordering-test-' . bin2hex(random_bytes(12));
-    mkdir($tmp . '/api', 0700, true);
-    mkdir($tmp . '/includes', 0700, true);
-    foreach (['api', 'includes'] as $folder) {
-        foreach (glob($root . '/' . $folder . '/*.php') as $file) {
-            if (!copy($file, $tmp . '/' . $folder . '/' . basename($file))) throw new RuntimeException('Cannot prepare isolated test');
+    mkdir($tmp . '/public', 0700, true);
+    foreach (['Database', 'Services', 'Security', 'Views', 'Controllers', 'Middlewares', 'Http'] as $folder) {
+        mkdir($tmp . '/app/' . $folder, 0700, true);
+        foreach (glob($root . '/app/' . $folder . '/*.php') as $file) {
+            if (!copy($file, $tmp . '/app/' . $folder . '/' . basename($file))) throw new RuntimeException('Cannot prepare isolated test');
         }
+    }
+    if (!copy($root . '/public/index.php', $tmp . '/public/index.php')) throw new RuntimeException('Cannot prepare front controller');
+    mkdir($tmp . '/routes', 0700, true);
+    foreach (glob($root . '/routes/*.php') as $file) {
+        if (!copy($file, $tmp . '/routes/' . basename($file))) throw new RuntimeException('Cannot prepare routes');
     }
     $harness = <<<'PHP'
 <?php
 $_SERVER['REQUEST_METHOD'] = $argv[1];
+$_SERVER['SCRIPT_NAME'] = '/index.php';
+$_SERVER['REQUEST_URI'] = '/api/' . $argv[5];
 $_GET = json_decode($argv[2], true, 512, JSON_THROW_ON_ERROR);
 $_POST = json_decode($argv[3], true, 512, JSON_THROW_ON_ERROR);
 $_SERVER = array_merge($_SERVER, json_decode($argv[6], true, 512, JSON_THROW_ON_ERROR));
@@ -27,7 +34,7 @@ if ($argv[7] === 'invalid') $_SERVER['HTTP_X_CSRF_TOKEN'] = str_repeat('b', 64);
 putenv('DEFAULT_BRANCH_ID=' . $argv[4]);
 putenv('DB_HOST='); putenv('DB_DATABASE='); putenv('POS_MODE=live');
 register_shutdown_function(static function () { file_put_contents('php://stderr', 'STATUS:' . (http_response_code() ?: 200)); });
-require __DIR__ . '/api/' . $argv[5];
+require __DIR__ . '/public/index.php';
 PHP;
     file_put_contents($tmp . '/run.php', $harness);
     try {
@@ -40,11 +47,14 @@ PHP;
         if ($exit !== 0 || !preg_match('/STATUS:(\d+)/', $stderr, $match)) throw new RuntimeException('API process failed: ' . $stderr);
         return ['status' => (int)$match[1], 'json' => json_decode($stdout, true, 512, JSON_THROW_ON_ERROR)];
     } finally {
-        foreach (['api', 'includes'] as $folder) {
-            foreach (glob($tmp . '/' . $folder . '/*.php') as $file) unlink($file);
-            rmdir($tmp . '/' . $folder);
+        foreach (['Database', 'Services', 'Security', 'Views', 'Controllers', 'Middlewares', 'Http'] as $folder) {
+            foreach (glob($tmp . '/app/' . $folder . '/*.php') as $file) unlink($file);
+            rmdir($tmp . '/app/' . $folder);
         }
-        unlink($tmp . '/run.php');
+        unlink($tmp . '/public/index.php');
+        foreach (glob($tmp . '/routes/*.php') as $file) unlink($file);
+        rmdir($tmp . '/routes');
+        rmdir($tmp . '/public'); rmdir($tmp . '/app'); unlink($tmp . '/run.php');
         foreach (glob($tmp . '/sess_*') as $sessionFile) unlink($sessionFile);
         rmdir($tmp);
     }

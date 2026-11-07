@@ -1,6 +1,6 @@
 <?php
 declare(strict_types=1);
-require_once dirname(__DIR__, 2) . '/includes/request_origin.php';
+require_once dirname(__DIR__, 2) . '/app/Security/request_origin.php';
 
 beforeEach(function () { $this->previousServer = $_SERVER; $this->previousOrigin = getenv('PUBLIC_ORIGIN'); putenv('PUBLIC_ORIGIN=https://testfood.example'); $_SERVER = ['HTTP_HOST' => 'testfood.example', 'REMOTE_ADDR' => '192.0.2.99']; });
 afterEach(function () { $_SERVER = $this->previousServer; $this->previousOrigin === false ? putenv('PUBLIC_ORIGIN') : putenv('PUBLIC_ORIGIN=' . $this->previousOrigin); });

@@ -1,0 +1,10 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Redirect root to public/
+    RewriteCond %{REQUEST_URI} ^(.*/)$
+    RewriteRule ^$ %1public/ [R=302,L,NE]
+
+    # Block access to internal directories (allow public)
+    RewriteRule ^(?!public(?:/|$)) - [F,NC]
+</IfModule>

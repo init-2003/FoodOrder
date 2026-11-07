@@ -1,8 +1,0 @@
-parameters:
-    level: 0
-    paths:
-        - api
-        - includes
-        - index.php
-        - config
-    tmpDir: storage/phpstan
