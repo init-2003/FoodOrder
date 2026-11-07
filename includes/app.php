@@ -72,11 +72,13 @@ $base = ($base === '' || $base === '.') ? '/' : $base . '/';
     html[data-page="login"] .cart-panel,
     html[data-page="login"] .mobile-bottom,
     html[data-page="login"] .sidebar,
+    html[data-page="tables"] .sidebar,
     html[data-page="tables"] .cart-panel,
     html[data-page="tables"] .mobile-bottom,
     html[data-initial-route="login"] .cart-panel,
     html[data-initial-route="login"] .mobile-bottom,
     html[data-initial-route="login"] .sidebar,
+    html[data-initial-route="tables"] .sidebar,
     html[data-initial-route="tables"] .cart-panel,
     html[data-initial-route="tables"] .mobile-bottom {
       display: none !important;
@@ -203,7 +205,7 @@ $base = ($base === '' || $base === '.') ? '/' : $base . '/';
   <symbol id="i-bolt" viewBox="0 0 24 24"><path fill="currentColor" stroke="none" d="M13.6 1 4.5 13h6.1l-1 10L19.5 10h-6.1z"/></symbol>
 </defs></svg>
 
-<aside class="sidebar" :inert="detailOpen" x-show="page !== 'login'">
+<aside class="sidebar" :inert="detailOpen" x-show="page !== 'login' && page !== 'tables'">
   <a class="brand" href="./" @click.prevent="staff ? openTableSelector() : navigate('menu')" :aria-label="t('อันเกิม')"><span class="brand-mark"><svg class="icon"><use href="#i-bowl"/></svg></span><span><span class="brand-th" x-text="t('อันเกิม')">อันเกิม</span><span class="brand-en" lang="vi">Ăn cơm</span></span></a>
   <div class="sidebar-rule"></div>
   <span class="nav-label"><span x-text="t('มื้ออร่อยของคุณ')">มื้ออร่อยของคุณ</span></span>
@@ -284,6 +286,7 @@ $base = ($base === '' || $base === '.') ? '/' : $base . '/';
 
       <!-- 2. Table Selection Section (Main System UI Style) -->
       <section x-show="page === 'tables'" <?= ($initialPage !== 'tables') ? 'style="display: none;"' : '' ?> x-cloak class="tables-section page-animated" aria-label="เลือกโต๊ะ">
+        <a class="staff-home-link" href="staff.php">← หน้าหลักพนักงาน</a>
         <div class="table-category-sticky" :class="{'is-stuck': tableCategoryStuck}"><div class="category-list" :class="{'category-list-filtered': tableFilter !== 'all'}" role="group" :aria-label="t('กรองสถานะโต๊ะ')">
           <button type="button" class="category-button" x-show="!tablesLoading || tablesList.length" :class="{'selected': tableFilter === 'all'}" :aria-pressed="tableFilter === 'all'" @click="tableFilter = 'all'">
             <span x-text="t('ทั้งหมด') + ' (' + tablesList.length + ')'">ทั้งหมด</span>

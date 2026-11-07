@@ -337,11 +337,8 @@ document.addEventListener('alpine:init', () => {
           this.staff = res.staff;
           try { localStorage.setItem('imdee:staff', JSON.stringify(res.staff)); } catch {}
           this.loginPassword = '';
-          await this.loadTables();
-          if (!this.staff) return;
-          this.navigate('tables');
-          await this.$nextTick();
           await this.alert({ icon: 'success', title: 'เข้าสู่ระบบสำเร็จ', customClass: { popup: 'glass-success' }, timer: 1500, showConfirmButton: false });
+          window.location.href = 'staff.php';
         } catch (err) {
           await this.alert({ icon: 'error', title: 'เข้าสู่ระบบไม่สำเร็จ', text: err.message || 'ชื่อผู้ใช้งานหรือรหัสผ่านไม่ถูกต้อง' });
         } finally {

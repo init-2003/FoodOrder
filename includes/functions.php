@@ -1,15 +1,10 @@
 <?php
 declare(strict_types=1);
+require_once __DIR__ . '/db.php';
+require_once __DIR__ . '/request_origin.php';
 
 if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && isset($_SERVER['HTTP_ORIGIN'], $_SERVER['HTTP_HOST'])) {
-    $origin = parse_url((string)$_SERVER['HTTP_ORIGIN']);
-    $host = parse_url('http://' . $_SERVER['HTTP_HOST']);
-    $originPort = $origin['port'] ?? (($origin['scheme'] ?? '') === 'https' ? 443 : 80);
-    $isHttps = !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off';
-    $hostPort = $host['port'] ?? ($isHttps ? 443 : 80);
-    if (!is_array($origin) || !is_array($host) || !in_array($origin['scheme'] ?? '', ['http', 'https'], true)
-        || strtolower((string)($origin['host'] ?? '')) !== strtolower((string)($host['host'] ?? '')) || $originPort !== $hostPort
-        || ($origin['scheme'] === 'https') !== $isHttps) {
+    if (!requestOriginMatches((string)$_SERVER['HTTP_ORIGIN'], (string)$_SERVER['HTTP_HOST'])) {
         http_response_code(403);
         header('Content-Type: application/json; charset=utf-8');
         exit(json_encode(['error' => ['code' => 'INVALID_ORIGIN', 'message' => 'คำขอไม่ถูกต้อง']], JSON_UNESCAPED_UNICODE));

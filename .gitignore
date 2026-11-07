@@ -1,6 +1,7 @@
 /.env
 /vendor/
 /node_modules/
+/assets/uploads/
 /tools/
 /storage/*
 !/storage/.gitkeep

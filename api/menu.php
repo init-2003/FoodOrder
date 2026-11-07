@@ -128,6 +128,7 @@ try {
             'category' => $catId,
             'price' => $price,
             'image' => $img,
+            'hasImage' => $linkImg !== '',
             'recommended' => $isRec,
             'recommendationScore' => $itemRank['score'] ?? 0,
             'recommendationQuantity' => $itemRank['quantity'] ?? 0,

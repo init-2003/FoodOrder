@@ -5884,3 +5884,9 @@ html[data-initial-route="login"] .content-layout {
   }
 }
 
+.staff-home-link { display: inline-block; margin: 0 0 14px; color: #e45f38; font-size: 14px; text-decoration: none; }
+/* The table selector is a full-width staff page. */
+html[data-page="tables"] .workspace,
+html[data-initial-route="tables"] .workspace { margin-left: 0 !important; width: 100% !important; }
+html[data-page="tables"] .mobile-brand,
+html[data-initial-route="tables"] .mobile-brand { display: flex !important; }

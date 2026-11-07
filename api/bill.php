@@ -59,7 +59,7 @@ try {
                 'bill' => null,
                 'error' => [
                     'code' => 'BILL_NOT_FOUND',
-                    'message' => "ไม่พบข้อมูลบิลเลขที่ {$fnDocNo} สาขา {$branchId} ในระบบ หรือ QR Code ไม่ถูกต้อง",
+                    'message' => "ไม่พบข้อมูลบิลเลขที่ {$fnDocNo} ในระบบ หรือ QR Code ไม่ถูกต้อง",
                 ],
             ], 404);
         }
