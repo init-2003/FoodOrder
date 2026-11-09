@@ -1,0 +1,536 @@
+/* Shared staff header appearance on the ordering and staff screens. */
+@font-face {
+  font-family: 'Staff Header Noto';
+  src: url('../fonts/noto-sans-thai-400.ttf') format('truetype');
+  font-weight: 400;
+  font-display: block;
+}
+@font-face {
+  font-family: 'Staff Header Noto';
+  src: url('../fonts/noto-sans-thai-600.ttf') format('truetype');
+  font-weight: 600;
+  font-display: block;
+}
+@font-face {
+  font-family: 'Staff Header Noto';
+  src: url('../fonts/noto-sans-thai-700.ttf') format('truetype');
+  font-weight: 700;
+  font-display: block;
+}
+body.has-staff-sidebar :is(.head, .topbar) {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0;
+  background: #fff;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+body.has-staff-sidebar .staff-shared-header .header-actions {
+  display: flex;
+  align-items: center;
+  flex: none;
+  order: 0;
+  margin: 0;
+}
+
+body.has-staff-sidebar .staff-shared-header .topbar-default {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  flex: 1;
+  min-width: 0;
+  width: auto;
+  gap: 0;
+  order: 0;
+}
+
+body.has-staff-sidebar .staff-shared-header .topbar-default .brand {
+  order: 0;
+  margin: 0;
+  flex: none;
+}
+body.has-staff-sidebar .staff-shared-header .topbar-default .mobile-brand { display: none !important; }
+
+body.has-staff-sidebar :is(.head, .topbar) .brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #263a31;
+  text-decoration: none;
+  letter-spacing: normal;
+  font-size: 23px;
+  line-height: normal;
+  font-weight: 700;
+}
+
+body.has-staff-sidebar :is(.head, .topbar) .brand-copy {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+body.has-staff-sidebar :is(.head, .topbar) .brand-mark {
+  display: grid;
+  place-items: center;
+  flex: 0 0 42px;
+  width: 42px !important;
+  height: 42px !important;
+  border-radius: 13px;
+  background: #ff754e;
+  transform: rotate(-3deg);
+}
+
+body.has-staff-sidebar :is(.head, .topbar) .brand-mark svg {
+  display: block;
+  flex: none;
+  width: 25px !important;
+  height: 25px !important;
+  max-width: none;
+  transform: none;
+}
+
+body.has-staff-sidebar :is(.head, .topbar) .brand-th {
+  display: block;
+  font-family: 'SOV Patigon', Noto, sans-serif;
+  font-size: 34px;
+  font-weight: 400;
+  line-height: .9;
+}
+
+body.has-staff-sidebar :is(.head, .topbar) .brand-en {
+  display: block;
+  font-family: 'Staff Header Noto', sans-serif;
+  font-size: 9px;
+  letter-spacing: .12em;
+  color: #95a299;
+  font-weight: 700;
+  line-height: 1.1;
+  margin-top: 2px;
+}
+
+body.has-staff-sidebar :is(.head, .topbar) .account-menu > summary {
+  width: 42px;
+  height: 42px;
+  min-height: 42px;
+}
+body.has-staff-sidebar :is(.head, .topbar) .account-menu > summary .hamburger-icon {
+  display: block;
+  width: 25px;
+  height: 25px;
+  flex: none;
+}
+
+@media (max-width: 760px), (min-width: 761px) and (max-width: 1100px) and (orientation: portrait) {
+  body.has-staff-sidebar :is(.head, .topbar) {
+    height: 60px;
+    padding: 0 16px;
+    margin-bottom: 0;
+    border: 0;
+  }
+  body.has-staff-sidebar .staff-shared-header .header-actions { margin-right: 10px !important; }
+  body.has-staff-sidebar .topbar > .account-menu { margin-right: 10px; }
+}
+
+@media (min-width: 761px) and (orientation: landscape), (min-width: 1101px) {
+  body.has-staff-sidebar :is(.head, .topbar) {
+    height: 87px;
+    padding: 0 34px;
+    border-bottom: 0;
+  }
+  body.has-staff-sidebar .staff-shared-header .header-actions { width: 0; }
+}
+
+/* Staff account and language menu (Sidebar Drawer) */
+.account-menu { position: relative; flex: none; font-family: 'Staff Header Noto', sans-serif; }
+.account-menu > summary { display: flex; align-items: center; justify-content: center; width: 42px; height: 42px; min-height: 42px; padding: 0; border: 0; background: transparent; border-radius: 13px; color: #263a31; cursor: pointer; list-style: none; transition: transform 160ms ease, background-color 140ms ease, color 140ms ease; }
+.account-menu > summary .hamburger-icon { display: block; width: 25px; height: 25px; flex: none; color: currentColor; }
+.account-menu > summary::-webkit-details-marker { display: none; }
+.account-menu > summary:focus-visible, .account-menu-logout:focus-visible, .account-menu-link:focus-visible { outline: 2px solid #e9683f; outline-offset: 2px; }
+.account-menu > summary:active { transform: scale(.9); }
+
+.account-menu-backdrop {
+  display: block;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+  background: rgba(18, 28, 22, 0.72);
+  z-index: 999;
+  opacity: 0;
+  pointer-events: none;
+  will-change: opacity;
+}
+
+.account-menu[open] .account-menu-backdrop {
+  pointer-events: auto;
+  animation: account-backdrop-fade-in 0.32s ease-out both !important;
+}
+
+.account-menu[open].is-closing .account-menu-backdrop {
+  animation: account-backdrop-fade-out 0.25s ease-in both !important;
+  pointer-events: none;
+}
+
+@keyframes account-backdrop-fade-in {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+@keyframes account-backdrop-fade-out {
+  0% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+.account-menu-panel {
+  position: fixed !important;
+  top: 0 !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  right: auto !important;
+  width: 300px !important;
+  max-width: 84vw !important;
+  height: 100vh !important;
+  height: 100dvh !important;
+  max-height: 100dvh !important;
+  border-radius: 0 24px 24px 0 !important;
+  border: none !important;
+  border-right: 1px solid #e1e8e0 !important;
+  box-shadow: 6px 0 32px rgba(38, 54, 46, 0.22) !important;
+  padding: 20px 20px 24px !important;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+  display: flex !important;
+  flex-direction: column !important;
+  z-index: 1000 !important;
+  box-sizing: border-box !important;
+  background: #fff !important;
+  color: #263a31 !important;
+  transform: translateX(-100%);
+  will-change: transform;
+}
+
+.account-menu[open] .account-menu-panel {
+  transform-origin: left center !important;
+  animation: account-drawer-slide-in 0.34s cubic-bezier(0.16, 1, 0.3, 1) both !important;
+}
+
+.account-menu[open].is-closing .account-menu-panel {
+  animation: account-drawer-slide-out 0.26s cubic-bezier(0.4, 0, 0.2, 1) both !important;
+  pointer-events: none;
+}
+
+@keyframes account-drawer-slide-in {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(0); }
+}
+
+@keyframes account-drawer-slide-out {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-100%); }
+}
+
+.account-menu-profile,
+.account-menu .account-menu-profile {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  margin: 12px 0;
+  padding: 12px;
+  border: 1px solid #e1e8e0;
+  border-radius: 12px;
+  background: #fff;
+}
+.account-menu-avatar {
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  border-radius: 50%;
+  background: #efece8;
+  overflow: hidden;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.account-menu-avatar svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.account-menu-profile-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  flex: 1;
+}
+.account-menu-brand { display: flex; align-items: center; min-height: 46px; margin-bottom: 12px; }
+.account-menu-name { font-size: 16px; font-weight: 700; color: #263a31; line-height: 1.3; }
+.account-menu-role { display: inline-block; align-self: flex-start; padding: 3px 10px; border-radius: 999px; background: #fff0e9; color: #fa784e; font-size: 12px; font-weight: 600; line-height: 1.35; }
+.account-menu-divider { width: 100%; height: 1px; background: #edf2ed; margin: 4px 0; }
+.account-menu-section-label { font-size: 12px; font-weight: 700; color: #8b928d; text-transform: uppercase; letter-spacing: 0.04em; padding: 2px 4px; margin-top: 2px; }
+.account-menu-nav { display: flex; flex-direction: column; gap: 4px; width: 100%; }
+.account-menu-link { display: flex; align-items: center; gap: 12px; width: 100%; padding: 10px 12px; border-radius: 12px; text-decoration: none; color: #26362e; transition: background-color 140ms ease, transform 100ms ease; font-size: 14px; background: transparent; border: 0; }
+.account-menu-link:hover, .account-menu-link:focus-visible { background: #fff0e9; color: #e9683f; text-decoration: none; }
+.account-menu-link:active { transform: scale(0.98); }
+.account-menu-link.active { background: #fff0e9 !important; color: #fa784e !important; font-weight: 600; }
+.account-menu-link.active .account-menu-icon { color: #fa784e !important; }
+.account-menu-icon { display: flex; align-items: center; justify-content: center; width: 26px; height: 26px; background: transparent; color: #fa784e; flex-shrink: 0; }
+.account-menu-icon svg { width: 22px; height: 22px; stroke: currentColor; stroke-width: 1.8; fill: none; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+.staff-shared-header .account-menu-icon svg { display: block; width: 22px !important; height: 22px !important; max-width: none; }
+.account-menu-link:hover .account-menu-icon { background: transparent; }
+.account-menu-text { display: flex; flex-direction: column; line-height: 1.25; text-align: left; }
+.account-menu-text strong { font-size: 15px; font-weight: 600; color: inherit; }
+.account-menu-text small { font-size: 12px; color: #8b928d; font-weight: 400; margin-top: 2px; }
+.account-menu-footer { display: flex; flex-direction: column; gap: 8px; width: 100%; margin-top: auto; padding-top: 16px; padding-bottom: max(6px, env(safe-area-inset-bottom, 6px)); }
+.account-menu-lang-row { display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 2px 2px; }
+.account-menu .language-switch {
+  position: relative;
+  isolation: isolate;
+  display: inline-flex;
+  align-items: center;
+  flex: none;
+  width: fit-content;
+  gap: 2px;
+  padding: 3px;
+  border-radius: 999px;
+  background: #e7ece8;
+  box-shadow: none;
+}
+.account-menu .language-switch::before {
+  content: '';
+  position: absolute;
+  z-index: 0;
+  left: 3px;
+  top: 3px;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: #fa784e !important;
+  box-shadow: 0 2px 6px rgba(250, 120, 78, 0.32);
+  transition: transform .25s cubic-bezier(.2, 1.25, .3, 1);
+  pointer-events: none;
+}
+.account-menu .language-switch.is-english::before {
+  transform: translateX(32px);
+}
+.account-menu .language-switch button {
+  position: relative;
+  z-index: 1;
+  width: 30px;
+  min-width: 0;
+  flex: none;
+  height: 30px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: #66766b;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color .2s ease;
+}
+.account-menu .language-switch button.active {
+  background: transparent;
+  color: #ffffff !important;
+  font-weight: 700;
+}
+.account-menu-label { color: #66766b; font-size: 13px; font-weight: 600; padding: 2px 4px; }
+.account-menu-logout { width: 100%; border: 0; border-top: 1px solid #edf2ed; background: #fff; color: #c4382c; padding: 14px 8px 8px; text-align: left; font: inherit; font-size: 16px; font-weight: 600; cursor: pointer; transition: color 140ms ease; }
+.account-menu-logout:hover { color: #a82419; }
+.account-menu-logout:disabled { opacity: .6; }
+
+@media (min-width: 761px) and (orientation: landscape), (min-width: 1101px) {
+  body.has-staff-sidebar .account-menu-panel {
+    width: 260px !important;
+    max-width: 260px !important;
+    border-radius: 0 !important;
+    border-right: 1px solid #edf0eb !important;
+    box-shadow: 2px 0 10px rgba(38, 54, 46, .04) !important;
+    padding: 24px 20px 20px !important;
+    transform: none !important;
+    animation: none !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .account-menu[open] .account-menu-panel,
+  .account-menu[open].is-closing .account-menu-panel,
+  .account-menu[open] .account-menu-backdrop,
+  .account-menu[open].is-closing .account-menu-backdrop { animation: none !important; }
+}
+
+/* Match the table selector's page entrance on server-rendered staff pages. */
+@keyframes staff-page-enter {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+body.staff-home > main { animation: staff-page-enter .24s cubic-bezier(.16, 1, .3, 1) both; }
+@media (prefers-reduced-motion: reduce) {
+  body.staff-home > main { animation: none; }
+}
+@media (max-width: 760px), (min-width: 761px) and (max-width: 1100px) and (orientation: portrait) {
+  body.staff-home .welcome,
+  body.staff-home .manage,
+  body.staff-home .expense-shell {
+    padding-top: 12px !important;
+  }
+  html[data-page="tables"] body.has-staff-sidebar .content-layout {
+    padding-top: 12px !important;
+  }
+}
+/* Match the ordering screen's confirmation dialog on staff pages. */
+body.staff-home .swal2-popup { font-family: 'Staff Header Noto', sans-serif !important; border-radius: 20px !important; box-shadow: 0 16px 48px rgba(38,54,46,.16) !important; }
+body.staff-home .swal2-popup:not(.swal2-toast) { width: min(340px, calc(100vw - 32px)) !important; padding: 24px 20px !important; }
+body.staff-home .swal2-popup:not(.swal2-toast) .swal2-title { padding: 14px 0 0 !important; font-size: 20px !important; font-weight: 600 !important; color: #263a31 !important; }
+body.staff-home .swal2-popup:not(.swal2-toast) .swal2-html-container { margin: 8px 0 0 !important; font-size: 14px !important; line-height: 1.7 !important; color: #78867b !important; }
+body.staff-home .swal2-popup:not(.swal2-toast) .swal2-icon.swal2-question { color: #ef7147 !important; border-color: #ffd9c9 !important; background: #fff5ef; }
+body.staff-home .swal2-actions { display: flex !important; justify-content: center !important; align-items: center !important; gap: 10px !important; width: 100% !important; max-width: 300px !important; margin: 1.2em auto 0 !important; }
+body.staff-home .swal2-styled { font-family: 'Staff Header Noto', sans-serif !important; font-size: 13px !important; font-weight: 600 !important; border-radius: 999px !important; padding: 12px 16px !important; margin: 0 !important; }
+body.staff-home .swal2-styled.swal2-confirm, body.staff-home .swal2-styled.swal2-cancel { flex: 1 1 0% !important; min-width: 110px !important; text-align: center !important; justify-content: center !important; }
+body.staff-home .swal2-popup:not(.swal2-toast) .swal2-styled.swal2-cancel { color: #657569 !important; background: #f0f3ef !important; }
+
+
+/* On touch layouts, reveal the sidebar by moving the page alongside it. */
+@media (max-width: 760px), (min-width: 761px) and (max-width: 1100px) and (orientation: portrait) {
+  body.has-staff-sidebar {
+    --staff-drawer-width: min(300px, 84vw);
+    overflow-x: clip;
+  }
+  body.has-staff-sidebar :is(.staff-shared-header .topbar-default, .staff-shared-header .menu-search-top, .staff-shared-header .account-menu > summary, .workspace > .content-layout, .workspace > .desktop-top-nav, .mobile-bottom, .floating-search),
+  body.staff-home > main {
+    translate: 0 0;
+    transition: translate .34s cubic-bezier(.16, 1, .3, 1);
+  }
+  body.has-staff-sidebar.account-drawer-open:not(.account-drawer-closing) :is(.staff-shared-header .topbar-default, .staff-shared-header .menu-search-top, .staff-shared-header .account-menu > summary, .workspace > .content-layout, .workspace > .desktop-top-nav, .mobile-bottom, .floating-search),
+  body.staff-home.account-drawer-open:not(.account-drawer-closing) > main {
+    translate: var(--staff-drawer-width) 0;
+  }
+  body.account-drawer-closing :is(.staff-shared-header .topbar-default, .staff-shared-header .menu-search-top, .staff-shared-header .account-menu > summary, .workspace > .content-layout, .workspace > .desktop-top-nav, .mobile-bottom, .floating-search),
+  body.staff-home.account-drawer-closing > main {
+    transition-duration: .26s;
+    transition-timing-function: cubic-bezier(.4, 0, .2, 1);
+  }
+  body.has-staff-sidebar.account-drawer-open :is(.mobile-bottom, .floating-search) { transform: none !important; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body.has-staff-sidebar :is(.staff-shared-header .topbar-default, .staff-shared-header .menu-search-top, .staff-shared-header .account-menu > summary, .workspace > .content-layout, .workspace > .desktop-top-nav, .mobile-bottom, .floating-search),
+  body.staff-home > main { transition: none !important; }
+}
+
+
+@media (max-width: 760px), (min-width: 761px) and (max-width: 1100px) and (orientation: portrait) {
+  body.has-staff-sidebar .staff-shared-header .topbar-default .mobile-brand { display: flex !important; }
+  body.has-staff-sidebar .account-menu-brand,
+  body.has-staff-sidebar .account-menu-brand + .account-menu-divider { display: none; }
+}
+body.staff-home:not(.food-image-page) > main.shell { width: 100%; max-width: none; }
+
+
+/* Reserve the search row so opening search does not move the navigation. */
+@media (min-width: 761px) and (orientation: landscape), (min-width: 1101px) {
+  html:is([data-page="menu"], [data-page="history"]) body.has-staff-sidebar .staff-shared-header { height: 64px; }
+  html[data-page="menu"] body.has-staff-sidebar .menu-category-sticky { top: 64px !important; }
+}
+.account-menu-link.active { position: relative; isolation: isolate; overflow: hidden; background: #fa784e !important; color: #fff !important; font-weight: 600; }
+.account-menu-link.active::before { content: ''; position: absolute; z-index: -1; width: 150px; height: 150px; right: -35px; top: -45px; border-radius: 50%; background: #ff8b63; pointer-events: none; }
+.account-menu-link.active .account-menu-icon { color: #fff !important; }
+.account-menu-link.active::before, .account-menu-link.active::after { content: ''; position: absolute; z-index: -1; border-radius: 50%; pointer-events: none; }
+.account-menu-link.active::before { width: 100px; height: 100px; right: -30px; top: -32px; background: rgba(255,255,255,.12); }
+.account-menu-link.active::after { width: 76px; height: 76px; right: -35px; top: -20px; background: rgba(255,255,255,.1); }
+.account-menu-name { min-width: 0; width: 100%; overflow: hidden; }
+.account-menu-name-text { display: inline-block; max-width: none; white-space: nowrap; }
+.account-menu-name.is-scrolling .account-menu-name-text { animation: staff-name-scroll var(--name-scroll-duration, 7s) ease-in-out infinite; }
+@keyframes staff-name-scroll {
+  0%, 15% { transform: translateX(0); }
+  45%, 60% { transform: translateX(calc(-1 * var(--name-scroll-distance, 0px))); }
+  90%, 100% { transform: translateX(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .account-menu-name { overflow: visible; }
+  .account-menu-name.is-scrolling .account-menu-name-text { animation: none; }
+  .account-menu-name-text { white-space: normal; overflow-wrap: anywhere; }
+}
+
+.account-menu-name { display: flex; gap: 48px; min-width: 0; width: 100%; overflow: hidden; }
+.account-menu-name-text { display: inline-block; flex: none; max-width: none; white-space: nowrap; }
+.account-menu-name-copy { display: none; }
+.account-menu-name.is-scrolling .account-menu-name-copy { display: inline-block; }
+.account-menu-name.is-scrolling .account-menu-name-text { animation: staff-name-scroll var(--name-scroll-duration, 12s) linear infinite; }
+@keyframes staff-name-scroll {
+  from { transform: translateX(0); }
+  to { transform: translateX(calc(-100% - 48px)); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .account-menu-name { overflow: visible; }
+  .account-menu-name.is-scrolling .account-menu-name-text { animation: none; }
+  .account-menu-name.is-scrolling .account-menu-name-copy { display: none; }
+  .account-menu-name-text { flex: 0 1 auto; min-width: 0; white-space: normal; overflow-wrap: anywhere; }
+}
+
+/* Match the heading and subtitle sizes across staff pages. */
+body.staff-home :is(.welcome, .expense-heading) h1 { font-size: 24px; line-height: 1.4; }
+body.staff-home .welcome > p:not(.eyebrow), body.staff-home .expense-heading p { font-size: 14px; }
+@media (max-width: 760px) {
+  body.staff-home :is(.welcome, .expense-heading) h1 { font-size: 21px; }
+}
+.account-menu { font-family: 'Staff Header Noto', sans-serif; font-size: 14px; line-height: 1.6; -webkit-font-smoothing: antialiased; }
+
+/* Soften the entrance on the food management page. */
+body.staff-home.food-image-page > main { animation: staff-page-enter .48s cubic-bezier(.22, 1, .36, 1) both; }
+@media (prefers-reduced-motion: reduce) {
+  body.staff-home.food-image-page > main { animation: none; }
+}
+/* Use the same solid field and orange focus ring throughout the staff and ordering pages. */
+body :is(.staff-field input, .search-field, .menu-search, .filters select, .expense-filters select, .detail-body textarea) {
+  background-color: #fff;
+  border: 1px solid #dfe5dd;
+  box-shadow: none;
+}
+body :is(.staff-field input, .search-field, .menu-search, .filters select, .expense-filters select) { border-radius: 999px; }
+body .detail-body textarea { border-radius: 18px; }
+body :is(.staff-field input:focus, .search-field:focus-within, .menu-search:focus-within, .filters select:focus, .expense-filters select:focus, .detail-body textarea:focus) {
+  border-color: #fa633b;
+  outline: 2px solid #fa633b;
+  outline-offset: 2px;
+  box-shadow: none;
+}
+body :is(.search-field input, .menu-search input) { outline: none; box-shadow: none; }
+body.food-image-page .filters :is(.menu-search, select) { background-color: #fff; border-color: #dfe5dd; box-shadow: none; }
+body.food-image-page .filters :is(.menu-search:focus-within, select:focus) { border-color: #fa633b; outline: 2px solid #fa633b; outline-offset: 2px; box-shadow: none; }
+
+/* Keep one orange border around a focused field. */
+body :is(.staff-field input:focus, .search-field:focus-within, .menu-search:focus-within, .filters select:focus, .expense-filters select:focus, .detail-body textarea:focus),
+body.food-image-page .filters :is(.menu-search:focus-within, select:focus) {
+  border: 2px solid #fa633b;
+  outline: none;
+  box-shadow: none;
+}
+/* Prevent older search styles from adding a second focus ring. */
+body .menu-search-top .search-field:focus-within,
+body .tables-search-field:focus-within,
+body .search-field:focus-within {
+  border: 2px solid #fa633b !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+body .search-field input:focus { border: 0 !important; outline: none !important; box-shadow: none !important; }
+/* Align staff page content with the expense report heading. */
+@media (min-width: 761px) and (orientation: landscape), (min-width: 1101px) {
+  body.staff-home .welcome { padding-top: 51px; }
+  body.staff-home .manage { padding-top: 56px; }
+  html[data-page="tables"] body.has-staff-sidebar .content-layout { padding-top: 56px; }
+}
+@media (max-width: 760px), (min-width: 761px) and (max-width: 1100px) and (orientation: portrait) {
+  body.staff-home .welcome { padding-top: 43px; }
+  body.staff-home .manage { padding-top: 48px; }
+  html[data-page="tables"] body.has-staff-sidebar .content-layout { padding-top: 48px; }
+}

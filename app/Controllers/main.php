@@ -23,6 +23,25 @@ if ($fnDocNo === '') {
 $tableNo = trim((string)($_GET['table'] ?? ''));
 $branchId = trim((string)($_GET['Branch_ID'] ?? $_GET['branch'] ?? (getenv('DEFAULT_BRANCH_ID') ?: '')));
 if ($branchId === '') { http_response_code(500); exit('กรุณากำหนด DEFAULT_BRANCH_ID'); }
+$billHash = (string)($_GET['billHash'] ?? '');
+if ($billHash !== '') {
+    require_once __DIR__ . '/../Services/BillHashService.php';
+    $hashLookupUnavailable = false;
+    try {
+        $pdo = Database::getConnection();
+        if (!$pdo) throw new RuntimeException('Database unavailable');
+        $fnDocNo = findBillByHash($pdo, $branchId, $billHash);
+    } catch (Throwable $e) {
+        appLog('error', 'Bill hash lookup failed', ['error' => $e->getMessage()]);
+        $hashLookupUnavailable = true;
+        $fnDocNo = null;
+    }
+    if ($fnDocNo === null) {
+        http_response_code($hashLookupUnavailable ? 503 : 404);
+        require __DIR__ . '/../Views/bill-unavailable.php';
+        return;
+    }
+}
 
 if (!isset($initialPage)) {
     if ($fnDocNo !== '' || $tableNo !== '') {
@@ -36,16 +55,29 @@ if (!isset($initialPage)) {
 $initialClosed = false;
 $initialCancelled = false;
 $guestsCount = null;
+$canonicalBillHash = '';
 
 if ($fnDocNo !== '' || $tableNo !== '') {
     try {
         $pdo = Database::getConnection();
         if ($pdo) {
             if ($fnDocNo !== '') {
-                $stmt = $pdo->prepare("SELECT Doc_Sts, Table_ID, Table_Person FROM Fnt_Header WHERE Fn_Doc_No = ? AND Branch_ID = ?");
+                $stmt = $pdo->prepare("SELECT Doc_Sts, Table_ID, Table_Person, CONVERT(varbinary(max), Fn_Qrcode_Order) AS Fn_Qrcode_Order FROM Fnt_Header WHERE Fn_Doc_No = ? AND Branch_ID = ?");
                 $stmt->execute([$fnDocNo, $branchId]);
                 $row = $stmt->fetch(PDO::FETCH_ASSOC);
                 if ($row) {
+                    $path = parse_url((string)($_SERVER['REQUEST_URI'] ?? ''), PHP_URL_PATH) ?: '';
+                    if ($staffEmId !== '' && preg_match('#/staff/tables/([0-9]{6,10})/?$#D', $path, $match) && $match[1] === $fnDocNo) {
+                        $candidate = trim(Database::decodeThai($row['Fn_Qrcode_Order'] ?? null));
+                        if (preg_match('/\A[a-p]{64}\z/D', $candidate)) {
+                            try {
+                                require_once __DIR__ . '/../Services/BillHashService.php';
+                                $canonicalBillHash = canonicalBillHash($pdo, $branchId, $fnDocNo, $candidate);
+                            } catch (Throwable $e) {
+                                appLog('warning', 'Cannot resolve canonical bill hash', ['error' => $e->getMessage()]);
+                            }
+                        }
+                    }
                     $docSts = (int)$row['Doc_Sts'];
                     $initialCancelled = $docSts === 3;
                     if ($docSts === 1 || $docSts === 3) {
@@ -86,6 +118,16 @@ if ($fnDocNo !== '' || $tableNo !== '') {
         }
     } catch (\Throwable $e) {
         // Fall back to client-side syncBill
+    }
+}
+
+if (!isset($canViewExpenses) && $staffEmId !== '') {
+    try {
+        require_once __DIR__ . '/../Services/ExpenseAccessService.php';
+        $expDb = $pdo ?? Database::getConnection();
+        $canViewExpenses = $expDb ? staffCanViewExpenses($expDb, $staffEmId, $staffUser) : false;
+    } catch (\Throwable $e) {
+        $canViewExpenses = false;
     }
 }
 

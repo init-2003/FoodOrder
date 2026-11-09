@@ -20,6 +20,7 @@
 /storage/uploads/products/*
 !/storage/uploads/products/.gitkeep
 /.phpunit.cache/
+/.idea/
 *.log
 
 /assets/uploads/

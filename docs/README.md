@@ -106,6 +106,8 @@ service-ordering/
 
 หน้าเว็บและ API ใช้ `public/index.php` เป็น front controller เพียงจุดเดียว โดยเส้นทางเดิม เช่น `api/auth.php`, `staff/` และ `staff/menus/` ต้องอาศัย Apache mod_rewrite หรือ IIS URL Rewrite Module ส่ง request เข้า `index.php` ไฟล์ static และ manifest ถูกส่งโดยเว็บเซิร์ฟเวอร์โดยตรง การตรวจ Origin และ CSRF อยู่ใน middleware สำหรับ API และการตรวจสิทธิ์อยู่ใน Controller
 
+ลิงก์บิลลูกค้ารองรับ `/{hash}` และ `/{เลขบิล}` ส่วนพนักงานใช้ `/staff/tables/{hash}` หรือ `/staff/tables/{เลขบิล}` โดยต้องเข้าสู่ระบบก่อน ระบบค้น hash จาก `Fnt_Header.Fn_Qrcode_Order` ภายในสาขาที่กำหนด และใช้ hash เป็น URL เริ่มต้นเมื่อเปิดหรือเลือกโต๊ะ หากบิลเดิมไม่มี hash จะใช้เลขบิล สูตร hash คำนวณจากเลขบิลและไม่ใช่ token ลับสำหรับยืนยันสิทธิ์
+
 สำหรับ IIS ต้องติดตั้ง URL Rewrite Module เพื่อใช้ทุกเส้นทางที่ไม่ใช่ไฟล์ static ไฟล์ `public/web.config` กำหนดกฎเทียบกับโฟลเดอร์ public ทั้งนี้ต้องตรวจ handler PHP, สิทธิ์ storage และทดสอบการ rewrite บนเซิร์ฟเวอร์จริง
 ติดตั้งเป็น PWA
 

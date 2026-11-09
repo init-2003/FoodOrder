@@ -6,7 +6,7 @@ if (preg_match('~(?:^|/)\.|\.(?:log|md)$|^/(?:app|config|routes|includes|tests|t
 }
 $public = realpath(dirname(__DIR__) . '/public');
 $file = realpath($public . $path);
-if ($file !== false && str_starts_with($file, $public . DIRECTORY_SEPARATOR) && is_file($file)) return false;
+if (preg_match('~^/(?:assets/.+\.(?:css|js|json|png|jpe?g|svg|ttf|woff2?|txt)|manifest\.php|sw\.js|offline\.html)$~i', $path) && $file !== false && str_starts_with($file, $public . DIRECTORY_SEPARATOR) && is_file($file)) return false;
 $_SERVER['SCRIPT_NAME'] = '/index.php';
-require $public . '/index.php';
+require dirname(__DIR__) . '/index.php';
 return true;

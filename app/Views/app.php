@@ -156,17 +156,20 @@ $base = ($base === '' || $base === '.') ? '/' : $base . '/';
       'name' => $staffName ?: $staffEmId,
       'username' => $staffUser,
       'role' => $staffRole ?: 'Staff',
+      'canViewExpenses' => !empty($canViewExpenses),
     ] : null, JSON_UNESCAPED_UNICODE) ?>;
   </script>
   <script defer src="assets/vendor/sweetalert2.min.js"></script>
   <script defer src="assets/js/translations.js?v=<?= filemtime(__DIR__ . '/../../public/assets/js/translations.js') ?>"></script>
   <script defer src="assets/js/pwa.js?v=<?= filemtime(__DIR__ . '/../../public/assets/js/pwa.js') ?>"></script>
   <script>window.appBranch = <?= json_encode($branchId, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;</script>
+  <script>window.appResolvedDoc = <?= json_encode((string)($fnDocNo ?? ''), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>; window.appBillHash = <?= json_encode((string)(($billHash ?? '') ?: ($canonicalBillHash ?? '')), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>; window.appCanonicalHash = <?= json_encode((string)($canonicalBillHash ?? ''), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;</script>
   <script>window.csrfToken = <?= json_encode($_SESSION['csrf_token'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;</script>
   <script defer src="assets/js/app.js?v=<?= filemtime(__DIR__ . '/../../public/assets/js/app.js') ?>"></script>
+  <script defer src="assets/js/account-menu.js?v=<?= filemtime(__DIR__ . '/../../public/assets/js/account-menu.js') ?>"></script>
   <script defer src="assets/vendor/alpine.min.js"></script>
 </head>
-<body x-data="orderingApp('<?= htmlspecialchars($initialPage, ENT_QUOTES, 'UTF-8') ?>', <?= !empty($initialClosed) ? 'true' : 'false' ?>, '<?= htmlspecialchars((string)($displayTable ?? ''), ENT_QUOTES, 'UTF-8') ?>', '<?= htmlspecialchars((string)($displayDoc ?? ''), ENT_QUOTES, 'UTF-8') ?>', <?= !empty($initialCancelled) ? 'true' : 'false' ?>)" @keydown.escape.window="closeDetail()" :class="{'dialog-open': detailOpen, 'detail-note-active': detailOpen && noteFocused, 'closed-bill-page': page === 'closed' || page === 'login'}">
+<body class="<?= (!empty($staffEmId) && ($initialPage ?? '') !== 'login') ? 'has-staff-sidebar' : '' ?>" x-data="orderingApp('<?= htmlspecialchars($initialPage, ENT_QUOTES, 'UTF-8') ?>', <?= !empty($initialClosed) ? 'true' : 'false' ?>, '<?= htmlspecialchars((string)($displayTable ?? ''), ENT_QUOTES, 'UTF-8') ?>', '<?= htmlspecialchars((string)($displayDoc ?? ''), ENT_QUOTES, 'UTF-8') ?>', <?= !empty($initialCancelled) ? 'true' : 'false' ?>)" @keydown.escape.window="closeDetail()" :class="{'dialog-open': detailOpen, 'detail-note-active': detailOpen && noteFocused, 'closed-bill-page': page === 'closed' || page === 'login', 'has-staff-sidebar': staff && page !== 'login'}">
 <svg class="icon-defs" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs>
   <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5M5.5 9.5V21h13V9.5M9.5 21v-7h5v7"/></symbol>
   <symbol id="i-snack" viewBox="0 0 24 24"><path d="M5 9h14l-1.4 11H6.4L5 9Zm3 0L7 4h3l1 5m2 0 1-6h3l-1 6"/></symbol>
@@ -205,6 +208,8 @@ $base = ($base === '' || $base === '.') ? '/' : $base . '/';
   <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></symbol>
   <symbol id="i-logout" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4m7 14 5-5-5-5m5 5H9"/></symbol>
   <symbol id="i-table" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M3 10h18M9 10v10m6-10v10"/></symbol>
+  <symbol id="i-utensils" viewBox="0 0 24 24"><path d="M18 2v6a3 3 0 0 1-3 3 3 3 0 0 1-3-3V2M15 11v11M5 2v5a2 2 0 0 0 2 2h0a2 2 0 0 0 2-2V2M7 9v13"/></symbol>
+  <symbol id="i-wallet" viewBox="0 0 24 24"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></symbol>
   <symbol id="i-flame" viewBox="0 0 24 24"><path fill="currentColor" stroke="none" d="M13.1 2.4c.4 3.1-1.6 4.5-3.1 6.2-1.3 1.4-2.4 2.9-2.4 5.2 0 1.2.5 2.2 1.2 2.8-.1-2 1.2-3.6 3-4.9 0 1.9 1.3 2.7 2 3.9.5.8.7 1.7.5 2.6 1.4-.7 2.3-2.2 2.3-4.1 0-2.3-1-4.4-2.4-6.1 3.8 1.9 6 5 6 8.3A8.2 8.2 0 0 1 12 24a8.2 8.2 0 0 1-8.2-8.2c0-4.7 2.6-7.4 5.2-9.6 1.4-1.2 2.8-2.4 4.1-3.8Z"/></symbol>
   <symbol id="i-bolt" viewBox="0 0 24 24"><path fill="currentColor" stroke="none" d="M13.6 1 4.5 13h6.1l-1 10L19.5 10h-6.1z"/></symbol>
 </defs></svg>
@@ -214,7 +219,6 @@ $base = ($base === '' || $base === '.') ? '/' : $base . '/';
   <div class="sidebar-rule"></div>
   <span class="nav-label"><span x-text="t('มื้ออร่อยของคุณ')">มื้ออร่อยของคุณ</span></span>
   <nav class="space-y-2" :aria-label="t('เมนูหลัก')">
-    <button type="button" class="nav-item" :class="{'active': page === 'tables'}" @click="openTableSelector()" x-show="staff" x-cloak><svg class="icon"><use href="#i-table"/></svg><span x-text="t('เลือกโต๊ะ')">เลือกโต๊ะ</span><svg class="icon nav-arrow"><use href="#i-arrow"/></svg></button>
     <button class="nav-item" :class="{'active': page === 'menu' && !searchOpen}" @click="navigate('menu')" x-show="page === 'tables' || (!closed && (table || docNo))" :disabled="page === 'tables'" x-cloak><svg class="icon"><use href="#i-grid"/></svg><span x-text="t('เมนูอาหาร')">เมนูอาหาร</span></button>
     <button type="button" class="nav-item" :class="{'active': page === 'menu' && searchOpen}" @click="openMenuSearch()" x-show="page === 'tables' || (!closed && (table || docNo))" :disabled="page === 'tables'" x-cloak><svg class="icon"><use href="#i-search"/></svg><span x-text="t('ค้นหา')">ค้นหา</span></button>
     <button class="nav-item" :class="{'active': page === 'history'}" @click="navigate('history')" x-show="page === 'tables' || (table || docNo)" :disabled="page === 'tables'" x-cloak><svg class="icon"><use href="#i-receipt"/></svg><span x-text="t('รายการที่สั่ง')">รายการที่สั่ง</span><span class="nav-count" x-show="page !== 'tables' && historyItems.length" x-text="historyItems.reduce((sum, item) => sum + item.qty, 0)"></span></button>
@@ -239,30 +243,22 @@ $base = ($base === '' || $base === '.') ? '/' : $base . '/';
 </aside>
 
 <div class="workspace" :inert="detailOpen">
-  <header class="topbar">
-    <div class="topbar-default" x-show="!searchOpen || (page !== 'menu' && page !== 'tables')" x-transition:enter="search-enter" x-transition:enter-start="search-enter-start" x-transition:enter-end="search-enter-end" x-transition:leave="search-leave" x-transition:leave-start="search-enter-end" x-transition:leave-end="search-enter-start">
-      <a class="mobile-brand brand" href="./" @click.prevent="staff ? openTableSelector() : navigate('menu')" :aria-label="t('อันเกิม')"><span class="brand-mark"><svg class="icon"><use href="#i-bowl"/></svg></span><span><span class="brand-th" x-text="t('อันเกิม')">อันเกิม</span><span class="brand-en" lang="vi">Ăn cơm</span></span></a>
-      <div class="branch" x-show="staff && page !== 'login'" x-cloak>
-        <svg class="icon"><use href="#i-pin"/></svg>
-        <span x-text="staff ? (t('ผู้ใช้งาน') + ': ' + staff.name) : t('อันเกิม สาขาหลัก')">อันเกิม สาขาหลัก</span>
-      </div>
-      <div class="topbar-right">
-        <button type="button" class="category-button topbar-switch-table-btn" x-show="staff && page !== 'tables' && page !== 'login'" @click="openTableSelector()" x-cloak <?= empty($staffEmId) ? 'style="display: none;"' : '' ?>>
-          <span x-text="t('เลือกโต๊ะ')">เลือกโต๊ะ</span>
+  <?php $headerMode = 'alpine'; require __DIR__ . '/Staff/header.php'; ?>
+      <nav class="desktop-top-nav" :aria-label="t('เมนูหลัก')" x-show="page !== 'login' && page !== 'tables'">
+        <button type="button" class="desktop-nav-item" :class="{'active': page === 'menu' && !searchOpen}" @click="navigate('menu')" x-show="page === 'tables' || (!closed && (table || docNo))" :disabled="page === 'tables'" x-cloak>
+          <svg class="icon" aria-hidden="true"><use href="#i-grid"/></svg>
+          <span x-text="t('เมนูอาหาร')">เมนูอาหาร</span>
         </button>
-        <div class="language-switch" :class="{'is-english': language === 'en'}" role="group" aria-label="Language / ภาษา">
-          <button type="button" @click="setLanguage('th')" :class="{'active': language === 'th'}" :aria-pressed="language === 'th'">TH</button>
-          <button type="button" @click="setLanguage('en')" :class="{'active': language === 'en'}" :aria-pressed="language === 'en'">EN</button>
-        </div>
-        <button type="button" class="help-icon logout-icon" x-show="staff && page !== 'login'" @click="logoutStaff()" :title="t('ออกจากระบบ')" :aria-label="t('ออกจากระบบ')" x-cloak><svg class="icon"><use href="#i-logout"/></svg></button>
-      </div>
-    </div>
-    <div class="menu-search-top" x-ref="menuSearchBar" x-show="searchOpen && (page === 'menu' || page === 'tables')" x-transition:enter="search-enter" x-transition:enter-start="search-enter-start" x-transition:enter-end="search-enter-end" x-transition:leave="search-leave" x-transition:leave-start="search-enter-end" x-transition:leave-end="search-enter-start" x-cloak>
-      <label class="search-field" x-show="page === 'menu'"><svg class="icon"><use href="#i-search"/></svg><input x-ref="menuSearch" type="search" enterkeyhint="search" x-model.debounce.150ms="search" :placeholder="t('ค้นหาเมนูที่อยากทาน...')" :aria-label="t('ค้นหาอาหาร')" @focus="menuSearchFocused = true" @blur="menuSearchFocused = false" @keydown.enter.prevent="$el.blur()" @keydown.escape.stop="closeMenuSearch()"></label>
-      <label class="search-field" x-show="page === 'tables'"><svg class="icon"><use href="#i-search"/></svg><input x-ref="tableSearchTop" type="search" enterkeyhint="search" x-model.trim="tableSearch" :placeholder="t('พิมพ์หมายเลขโต๊ะ')" :aria-label="t('ค้นหาหมายเลขโต๊ะ')" @keydown.enter.prevent="$el.blur()" @keydown.escape.stop="closeMenuSearch()"></label>
-      <button type="button" class="menu-search-close" @click="closeMenuSearch()" :aria-label="t('ปิดการค้นหา')"><svg class="icon"><use href="#i-close"/></svg></button>
-    </div>
-  </header>
+        <button type="button" class="desktop-nav-item" :class="{'active': page === 'menu' && searchOpen}" @click="openMenuSearch()" x-show="page === 'tables' || (!closed && (table || docNo))" :disabled="page === 'tables'" x-cloak>
+          <svg class="icon" aria-hidden="true"><use href="#i-search"/></svg>
+          <span x-text="t('ค้นหา')">ค้นหา</span>
+        </button>
+        <button type="button" class="desktop-nav-item" :class="{'active': page === 'history'}" @click="navigate('history')" x-show="page === 'tables' || (table || docNo)" :disabled="page === 'tables'" x-cloak>
+          <svg class="icon" aria-hidden="true"><use href="#i-receipt"/></svg>
+          <span x-text="t('รายการที่สั่ง')">รายการที่สั่ง</span>
+          <span class="desktop-nav-count" x-show="page !== 'tables' && historyItems.length" x-text="historyItems.reduce((sum, item) => sum + item.qty, 0)"></span>
+        </button>
+      </nav>
 
   <div class="content-layout" :class="{'wide-view': page === 'closed' || page === 'login' || page === 'tables' || closed}">
     <main id="main-content" class="main-content">
@@ -288,79 +284,7 @@ $base = ($base === '' || $base === '.') ? '/' : $base . '/';
         </div>
       </section>
 
-      <!-- 2. Table Selection Section (Main System UI Style) -->
-      <section x-show="page === 'tables'" <?= ($initialPage !== 'tables') ? 'style="display: none;"' : '' ?> x-cloak class="tables-section page-animated" aria-label="เลือกโต๊ะ">
-        <a class="staff-home-link" href="staff/">← หน้าหลักพนักงาน</a>
-        <div class="table-category-sticky" :class="{'is-stuck': tableCategoryStuck}"><div class="category-list" :class="{'category-list-filtered': tableFilter !== 'all'}" role="group" :aria-label="t('กรองสถานะโต๊ะ')">
-          <button type="button" class="category-button" x-show="!tablesLoading || tablesList.length" :class="{'selected': tableFilter === 'all'}" :aria-pressed="tableFilter === 'all'" @click="tableFilter = 'all'">
-            <span x-text="t('ทั้งหมด') + ' (' + tablesList.length + ')'">ทั้งหมด</span>
-          </button>
-          <button type="button" class="category-button" x-show="!tablesLoading || tablesList.length" :class="{'selected': tableFilter === 'open'}" :aria-pressed="tableFilter === 'open'" @click="tableFilter = 'open'">
-            <span class="status-dot is-open"></span>
-            <span x-text="t('เปิดบิลแล้ว') + ' (' + tablesList.filter(t => t.isOpen).length + ')'">เปิดบิลแล้ว</span>
-          </button>
-          <button type="button" class="category-button" x-show="!tablesLoading || tablesList.length" :class="{'selected': tableFilter === 'available'}" :aria-pressed="tableFilter === 'available'" @click="tableFilter = 'available'">
-            <span class="status-dot is-available"></span>
-            <span x-text="t('ว่าง') + ' (' + tablesList.filter(t => !t.isOpen).length + ')'">ว่าง</span>
-          </button>
-          <button type="button" class="category-button topbar-switch-table-btn topbar-refresh" @click="refreshTables()" :disabled="tablesLoading || tablesRefreshing" :aria-label="t('รีเฟรชสถานะโต๊ะ')" :title="t('รีเฟรชสถานะโต๊ะ')">
-            <svg class="icon" :class="{'is-refreshing': tablesRefreshing}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 0 0-14-5L4 8"/><path d="M4 4v4h4"/><path d="M4 13a8 8 0 0 0 14 5l2-2"/><path d="M16 16h4v4"/></svg>
-          </button>
-          <template x-if="tablesLoading && !tablesList.length">
-            <div class="skeleton-categories" role="status" :aria-label="t('กำลังโหลด')">
-              <span class="skeleton skeleton-category"></span>
-              <span class="skeleton skeleton-category"></span>
-              <span class="skeleton skeleton-category"></span>
-            </div>
-          </template>
-        </div></div>
-
-        <div class="tables-native-search">
-          <label class="search-field tables-search-field">
-            <svg class="icon"><use href="#i-search"/></svg>
-            <input type="search" enterkeyhint="search" x-model.trim="tableSearch" :placeholder="t('พิมพ์หมายเลขโต๊ะ')" :aria-label="t('ค้นหาหมายเลขโต๊ะ')">
-            <button type="button" class="tables-search-clear" x-show="tableSearch" @click="tableSearch = ''" :aria-label="t('ล้างคำค้น')" x-cloak><svg class="icon"><use href="#i-close"/></svg></button>
-          </label>
-        </div>
-
-        <div class="food-grid skeleton-menu" x-show="tablesLoading && !tablesList.length" role="status" :aria-label="t('กำลังโหลด')">
-          <template x-for="n in 6" :key="n">
-            <div class="food-card skeleton-card" aria-hidden="true">
-              <div class="skeleton skeleton-food-image"></div>
-              <div class="food-card-body">
-                <div class="skeleton skeleton-line skeleton-title"></div>
-                <div class="skeleton skeleton-line skeleton-short"></div>
-              </div>
-            </div>
-          </template>
-        </div>
-
-        <div class="food-grid tables-food-grid" x-show="(!tablesLoading || tablesList.length) && filteredTables.length > 0">
-          <template x-for="(tbl, index) in filteredTables" :key="tbl.id">
-            <article class="food-card table-card-item" :style="'--card-delay:' + (Math.min(index, 7) * 45) + 'ms'" @click="selectTable(tbl)">
-              <div class="food-image-button table-card-visual">
-                <div class="table-visual-surface" :class="tbl.isOpen ? 'surface-open' : 'surface-available'">
-                  <strong class="table-visual-number" x-text="tbl.name"></strong>
-                </div>
-                <span class="food-badge" :class="{'green-badge': !tbl.isOpen}">
-                  <span class="status-dot" :class="tbl.isOpen ? 'is-open' : 'is-available'"></span>
-                  <span x-text="tbl.isOpen ? t('เปิดบิลแล้ว') : t('ว่าง')"></span>
-                </span>
-              </div>
-              <div class="food-card-body">
-                <p class="food-english" style="text-align: center; margin: 0;" x-text="tbl.isOpen && tbl.docNo ? (t('เลขที่บิล') + ' ' + tbl.docNo) : (t('เลขที่บิล') + ' N/A')"></p>
-              </div>
-            </article>
-          </template>
-        </div>
-
-        <div class="empty-state search-empty" x-show="!tablesLoading && !filteredTables.length" x-cloak>
-          <svg class="icon"><use href="#i-search"/></svg>
-          <h3 x-text="t('ไม่พบหมายเลขโต๊ะที่ค้นหา')">ไม่พบหมายเลขโต๊ะที่ค้นหา</h3>
-          <p x-text="t('ลองค้นหาด้วยหมายเลขอื่น หรือดูโต๊ะทั้งหมด')">ลองค้นหาด้วยหมายเลขอื่น หรือดูโต๊ะทั้งหมด</p>
-          <button type="button" class="text-button" @click="tableSearch = ''; tableFilter = 'all'"><span x-text="t('แสดงโต๊ะทั้งหมด')">แสดงโต๊ะทั้งหมด</span> <span>→</span></button>
-        </div>
-      </section>
+      <?php require __DIR__ . '/Staff/tables.php'; ?>
 
       <section x-show="page === 'menu' || page === 'cart'" <?= ($initialPage !== 'menu' && $initialPage !== 'cart') ? 'style="display: none;"' : '' ?> x-cloak class="page-animated" :class="{'cart-background-menu': page === 'cart'}" aria-label="เมนูอาหาร">
                 <div class="menu-category-sticky" :class="{'is-stuck': menuCategoryStuck}"><div class="category-list" :class="{'category-list-filtered': categoryId !== 'all', 'is-mouse-dragging': categoryDrag?.dragging, 'has-scroll-left': categoryHasScrolled}" role="group" :aria-label="t('หมวดหมู่อาหาร')" @scroll="categoryHasScrolled = $el.scrollLeft > 2" @pointerdown="startCategoryDrag($event)" @pointermove="moveCategoryDrag($event)" @pointerup="endCategoryDrag($event)" @pointercancel="endCategoryDrag($event)" @click.capture="if (categorySuppressClick) { $event.preventDefault(); $event.stopPropagation(); categorySuppressClick = false; }" @wheel="scrollCategoryWheel($event)"><template x-for="category in categories.filter(category => category.id !== 'all')" :key="category.id"><button class="category-button" x-show="!loading" :class="{'selected': categoryId === category.id}" :aria-pressed="categoryId === category.id" @click="selectMenuCategory(category.id)"><span x-text="category.id === 'all' ? t('เมนูทั้งหมด') : (category.id === 'recommended' ? t('เมนูแนะนำ') : category.name)"></span></button></template><template x-if="loading"><div class="skeleton-categories" role="status" :aria-label="t('กำลังโหลดหมวดหมู่อาหาร')"><span class="skeleton skeleton-category"></span><span class="skeleton skeleton-category"></span><span class="skeleton skeleton-category"></span></div></template></div></div>

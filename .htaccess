@@ -1,10 +1,12 @@
 <IfModule mod_rewrite.c>
     RewriteEngine On
-
-    # Redirect root to public/
-    RewriteCond %{REQUEST_URI} ^(.*/)$
-    RewriteRule ^$ %1public/ [R=302,L,NE]
-
-    # Block access to internal directories (allow public)
-    RewriteRule ^(?!public(?:/|$)) - [F,NC]
+    # Only explicitly public files may bypass the front controller.
+    RewriteRule (^|/)\. - [F,L]
+    RewriteRule ^(?:app|config|database|docs|routes|storage|tests|vendor|public)(?:/|$) - [F,L,NC]
+    RewriteRule ^(?:assets/.+\.(?:css|js|json|png|jpe?g|svg|ttf|woff2?|txt)|manifest\.php|sw\.js|offline\.html)$ public/$0 [END,NC]
+    RewriteRule ^index\.php$ - [L]
+    RewriteRule ^ index.php [QSA,L]
+</IfModule>
+<IfModule !mod_rewrite.c>
+    Require all denied
 </IfModule>

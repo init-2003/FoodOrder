@@ -17,11 +17,13 @@ function resolvePublicRoute(string $requestUri, string $scriptName): array
     if ($path === '/staff/food-images' || $path === '/staff/food-images/') return ['route' => null, 'redirect' => $base . '/staff/menus/'];
     if (preg_match('#^/([0-9]{6,10})/?$#D', $path, $m)) return ['route' => '/', 'bill' => $m[1]];
     if (preg_match('#^/staff/tables/([0-9]{6,10})/?$#D', $path, $m)) return ['route' => '/staff/tables/', 'bill' => $m[1]];
+    if (preg_match('#^/([a-p]{64})/?$#D', $path, $m)) return ['route' => '/', 'billHash' => $m[1]];
+    if (preg_match('#^/staff/tables/([a-p]{64})/?$#D', $path, $m)) return ['route' => '/staff/tables/', 'billHash' => $m[1]];
     $legacy = ['/staff/index.php' => '/staff/', '/staff/tables/index.php' => '/staff/tables/', '/staff/menus/index.php' => '/staff/menus/', '/staff/food-images/index.php' => '/staff/food-images/'];
     if (isset($legacy[$path])) return ['route' => $legacy[$path]];
-    if (preg_match('#^/staff(?:/(?:tables|menus|food-images))?$#D', $path)) {
+    if (preg_match('#^/staff(?:/(?:tables|menus|food-images|expenses))?$#D', $path)) {
         return ['route' => null, 'redirect' => $base . $path . '/'];
     }
-    if (preg_match('#^/staff/(?:tables|menus|food-images)/$#D', $path) || $path === '/staff/' || preg_match('#^/api/[a-zA-Z0-9-]+\.php$#D', $path)) return ['route' => $path];
+    if (preg_match('#^/staff/(?:tables|menus|food-images|expenses)/$#D', $path) || $path === '/staff/' || preg_match('#^/api/[a-zA-Z0-9-]+\.php$#D', $path)) return ['route' => $path];
     return ['route' => null];
 }
