@@ -70,9 +70,9 @@
 | `public/assets/css/tailwind.css` | ไฟล์ CSS ที่คอมไพล์แล้วจาก Tailwind CLI |
 | `app/Controllers/` | Controller ประมวลผลคำขอ (`main.php`, `staff.php`, `auth.php`, `bill.php`, `order.php` ฯลฯ) |
 | `app/Views/app.php` | ส่วนแสดงผลหน้าเว็บหลัก (SPA UI, Alpine bindings, SVG icons, เมนู, ตะกร้า, ประวัติ) |
-| `app/Views/tables.php` | แม่แบบหน้ารวมโต๊ะสำหรับพนักงาน |
-| `app/Views/staff.php` | แม่แบบหน้าหลักพนักงาน (Staff Portal Home) |
-| `app/Views/food-images.php` | แม่แบบหน้าจัดการเมนูอาหารและรูปภาพ |
+| `app/Views/Staff/tables.php` | แม่แบบหน้ารวมโต๊ะสำหรับพนักงาน |
+| `app/Views/Staff/staff.php` | แม่แบบหน้าหลักพนักงาน (Staff Portal Home) |
+| `app/Views/Staff/food-images.php` | แม่แบบหน้าจัดการเมนูอาหารและรูปภาพ |
 | `app/Middlewares/staff-access.php` | Middleware ตรวจสอบสิทธิ์เซสชันพนักงาน ป้องกันผู้ไม่มีสิทธิ์เข้าถึงโฟลเดอร์ `staff/` |
 | `app/Database/db.php` | คลาส `Database` จัดการ PDO_ODBC connection และแปลงภาษาไทย (`decodeThai` / `hexThai`) |
 | `app/Services/` | Business Logic Layer (`BillService`, `OrderService`, `TableService`, `MenuService` ฯลฯ) |

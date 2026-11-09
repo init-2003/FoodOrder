@@ -162,6 +162,7 @@ $base = ($base === '' || $base === '.') ? '/' : $base . '/';
   <script defer src="assets/js/translations.js?v=<?= filemtime(__DIR__ . '/../../public/assets/js/translations.js') ?>"></script>
   <script defer src="assets/js/pwa.js?v=<?= filemtime(__DIR__ . '/../../public/assets/js/pwa.js') ?>"></script>
   <script>window.appBranch = <?= json_encode($branchId, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;</script>
+  <script>window.appResolvedDoc = <?= json_encode((string)($fnDocNo ?? ''), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>; window.appBillHash = <?= json_encode((string)(($billHash ?? '') ?: ($canonicalBillHash ?? '')), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>; window.appCanonicalHash = <?= json_encode((string)($canonicalBillHash ?? ''), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;</script>
   <script>window.csrfToken = <?= json_encode($_SESSION['csrf_token'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;</script>
   <script defer src="assets/js/app.js?v=<?= filemtime(__DIR__ . '/../../public/assets/js/app.js') ?>"></script>
   <script defer src="assets/vendor/alpine.min.js"></script>

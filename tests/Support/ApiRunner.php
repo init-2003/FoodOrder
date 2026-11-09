@@ -13,7 +13,7 @@ function runApi(string $endpoint, string $method = 'GET', array $query = [], arr
             if (!copy($file, $tmp . '/app/' . $folder . '/' . basename($file))) throw new RuntimeException('Cannot prepare isolated test');
         }
     }
-    if (!copy($root . '/public/index.php', $tmp . '/public/index.php')) throw new RuntimeException('Cannot prepare front controller');
+    if (!copy($root . '/index.php', $tmp . '/index.php')) throw new RuntimeException('Cannot prepare front controller');
     mkdir($tmp . '/routes', 0700, true);
     foreach (glob($root . '/routes/*.php') as $file) {
         if (!copy($file, $tmp . '/routes/' . basename($file))) throw new RuntimeException('Cannot prepare routes');
@@ -34,7 +34,7 @@ if ($argv[7] === 'invalid') $_SERVER['HTTP_X_CSRF_TOKEN'] = str_repeat('b', 64);
 putenv('DEFAULT_BRANCH_ID=' . $argv[4]);
 putenv('DB_HOST='); putenv('DB_DATABASE='); putenv('POS_MODE=live');
 register_shutdown_function(static function () { file_put_contents('php://stderr', 'STATUS:' . (http_response_code() ?: 200)); });
-require __DIR__ . '/public/index.php';
+require __DIR__ . '/index.php';
 PHP;
     file_put_contents($tmp . '/run.php', $harness);
     try {
@@ -51,7 +51,7 @@ PHP;
             foreach (glob($tmp . '/app/' . $folder . '/*.php') as $file) unlink($file);
             rmdir($tmp . '/app/' . $folder);
         }
-        unlink($tmp . '/public/index.php');
+        unlink($tmp . '/index.php');
         foreach (glob($tmp . '/routes/*.php') as $file) unlink($file);
         rmdir($tmp . '/routes');
         rmdir($tmp . '/public'); rmdir($tmp . '/app'); unlink($tmp . '/run.php');

@@ -1,13 +1,34 @@
 /* QR Self-Ordering with SQL Server POS Integration */
 const isMobileLayout = () => window.matchMedia('(max-width: 760px), (min-width: 761px) and (max-width: 1100px) and (orientation: portrait)').matches;
+if (/^[a-p]{64}$/.test(window.appCanonicalHash || '') && /\/staff\/tables\/[0-9]{6,10}\/?$/.test(window.location.pathname)) {
+  const path = window.location.pathname.replace(/\/[0-9]{6,10}\/?$/, '/' + window.appCanonicalHash);
+  history.replaceState(history.state, '', path + window.location.search + window.location.hash);
+}
 const urlParams = new URLSearchParams(window.location.search);
 const pathDocMatch = window.location.pathname.match(/\/([0-9]{6,10})\/?$/);
 const pathDoc = pathDocMatch ? pathDocMatch[1] : '';
+const pathHash = /\/[a-p]{64}\/?$/.test(window.location.pathname);
 const shortDoc = window.location.search.slice(1).split('&', 1)[0];
-const defaultDoc = urlParams.get('bill') || urlParams.get('Fn_Doc_No') || urlParams.get('doc') || urlParams.get('doc_no') || pathDoc || (/^\d+$/.test(shortDoc) ? shortDoc : '');
+const defaultDoc = window.appResolvedDoc || urlParams.get('bill') || urlParams.get('Fn_Doc_No') || urlParams.get('doc') || urlParams.get('doc_no') || pathDoc || (/^\d+$/.test(shortDoc) ? shortDoc : '');
+const billHashMap = new Map();
+if (/^[a-p]{64}$/.test(window.appBillHash || '') && defaultDoc) billHashMap.set(window.appBillHash, defaultDoc);
+function rememberBillHash(hash, doc) {
+  if (/^[a-p]{64}$/.test(hash || '') && doc) billHashMap.set(hash, String(doc));
+}
+function preferredBillIdentifier(hash, doc) {
+  const normalized = String(hash || '').trim();
+  return /^[a-p]{64}$/.test(normalized) ? normalized : String(doc || '');
+}
+function routeBillIdentifier(path) {
+  const match = path.match(/\/([0-9]{6,10}|[a-p]{64})\/?$/);
+  return match ? match[1] : '';
+}
 const defaultTable = urlParams.get('table') || '';
 const defaultBranch = window.appBranch;
-if (defaultDoc && /^\d+$/.test(defaultDoc) && shortDoc !== defaultDoc && !pathDoc && !urlParams.has('bill') && !urlParams.has('table')) {
+if (window.location.hash === '#login' && !defaultDoc && !defaultTable) {
+  history.replaceState(history.state, '', window.location.pathname + window.location.search);
+}
+if (defaultDoc && /^\d+$/.test(defaultDoc) && shortDoc !== defaultDoc && !pathDoc && !pathHash && !urlParams.has('bill') && !urlParams.has('table')) {
   const remainingParams = new URLSearchParams(window.location.search);
   ['Fn_Doc_No', 'doc', 'doc_no', 'bill'].forEach(key => remainingParams.delete(key));
   const suffix = remainingParams.toString();
@@ -424,6 +445,8 @@ document.addEventListener('alpine:init', () => {
             this.table = res.Table_ID || tbl.id || res.table || tbl.number;
             this.tableName = res.tableName || tbl.name;
             this.docNo = res.docNo || tbl.docNo || '';
+            const billIdentifier = preferredBillIdentifier(res.Fn_Qrcode_Order, this.docNo);
+            rememberBillHash(billIdentifier, this.docNo);
             this.closed = false;
             this.canOrder = true;
             this.cart = getStoredCart(this.table, this.docNo, this.branch);
@@ -438,8 +461,8 @@ document.addEventListener('alpine:init', () => {
               ? location.pathname.replace(/\/staff\/tables(?:\/.*)?$/, '/staff/tables/')
               : new URL('staff/tables/', document.baseURI).pathname;
             const nextUrl = this.staff
-              ? `${staffBase}${encodeURIComponent(this.docNo)}#menu`
-              : `${new URL(document.baseURI).pathname.replace(/\/?$/, '/')}${encodeURIComponent(this.docNo)}#menu`;
+              ? `${staffBase}${encodeURIComponent(billIdentifier)}#menu`
+              : `${new URL(document.baseURI).pathname.replace(/\/?$/, '/')}${encodeURIComponent(billIdentifier)}#menu`;
             if (this.page === 'tables' && (location.hash !== '#tables' || location.search)) history.replaceState(history.state, '', `${staffBase}#tables`);
             history.pushState(history.state, '', nextUrl);
             this.navigate('menu');
@@ -497,6 +520,8 @@ document.addEventListener('alpine:init', () => {
             this.table = res.Table_ID || tbl.id || res.table || tbl.number;
             this.tableName = res.tableName || tbl.name;
             this.docNo = res.docNo || '';
+            const billIdentifier = preferredBillIdentifier(res.Fn_Qrcode_Order, this.docNo);
+            rememberBillHash(billIdentifier, this.docNo);
             this.closed = false;
             this.canOrder = true;
             this.cart = [];
@@ -508,8 +533,8 @@ document.addEventListener('alpine:init', () => {
               ? location.pathname.replace(/\/staff\/tables(?:\/.*)?$/, '/staff/tables/')
               : new URL('staff/tables/', document.baseURI).pathname;
             const nextUrl = this.staff
-              ? `${staffBase}${encodeURIComponent(this.docNo)}#menu`
-              : `${new URL(document.baseURI).pathname.replace(/\/?$/, '/')}${encodeURIComponent(this.docNo)}#menu`;
+              ? `${staffBase}${encodeURIComponent(billIdentifier)}#menu`
+              : `${new URL(document.baseURI).pathname.replace(/\/?$/, '/')}${encodeURIComponent(billIdentifier)}#menu`;
             if (this.page === 'tables' && (location.hash !== '#tables' || location.search)) history.replaceState(history.state, '', `${staffBase}#tables`);
             history.pushState(history.state, '', nextUrl);
             this.navigate('menu');
@@ -579,11 +604,11 @@ document.addEventListener('alpine:init', () => {
         const url = new URLSearchParams(window.location.search);
         const qFirst = (window.location.search || '').replace(/^\?/, '').split('&')[0];
         const shortDoc = /^\d+$/.test(qFirst) ? qFirst : '';
-        const pathDocMatch = window.location.pathname.match(/\/([0-9]{6,10})\/?$/);
-        const pathDoc = pathDocMatch ? pathDocMatch[1] : '';
+        const pathIdentifier = routeBillIdentifier(window.location.pathname);
+        const pathDoc = billHashMap.get(pathIdentifier) || (/^\d+$/.test(pathIdentifier) ? pathIdentifier : '');
         const hasScannedBill = !!(url.get('Fn_Doc_No') || url.get('doc') || url.get('doc_no') || url.get('bill') || url.get('table') || shortDoc || pathDoc);
         if (url.get('Fn_Doc_No') || url.get('doc') || url.get('doc_no') || url.get('bill') || shortDoc || pathDoc) {
-          this.docNo = url.get('Fn_Doc_No') || url.get('doc') || url.get('doc_no') || url.get('bill') || pathDoc || shortDoc;
+          this.docNo = (/^[a-p]{64}$/.test(pathIdentifier) ? pathDoc : '') || url.get('Fn_Doc_No') || url.get('doc') || url.get('doc_no') || url.get('bill') || pathDoc || shortDoc;
         }
         if (url.get('table')) {
           this.table = url.get('table');
@@ -642,7 +667,8 @@ document.addEventListener('alpine:init', () => {
           if (location.search !== canonicalSearch && (url.has('Fn_Doc_No') || url.has('doc') || url.has('doc_no') || shortDoc)) {
             history.replaceState(history.state, '', `${location.pathname}${canonicalSearch}${currentHash}`);
           } else if (!location.hash || (!this.staff && location.hash === '#tables')) {
-            history.replaceState(history.state, '', `${location.pathname}${location.search || canonicalSearch}#${this.page === 'tables' && !this.staff ? 'menu' : this.page}`);
+            const search = /^[a-p]{64}$/.test(pathIdentifier) ? location.search : (location.search || canonicalSearch);
+            history.replaceState(history.state, '', `${location.pathname}${search}#${this.page === 'tables' && !this.staff ? 'menu' : this.page}`);
           }
         } else if (!location.hash && this.page === 'menu') {
           history.replaceState(history.state, '', `${location.pathname}${location.search}#menu`);
@@ -651,11 +677,12 @@ document.addEventListener('alpine:init', () => {
         const restoreHistoryRoute = () => {
           const next = location.hash.slice(1);
           const currentParams = new URLSearchParams(location.search);
-          const pathDocMatch = location.pathname.match(/\/([0-9]{6,10})\/?$/);
-          const currentPathDoc = pathDocMatch ? pathDocMatch[1] : '';
-          const currentDoc = currentParams.get('Fn_Doc_No') || currentParams.get('doc') || currentParams.get('doc_no') || currentParams.get('bill') || currentPathDoc || (/^\d+$/.test(location.search.slice(1).split('&')[0]) ? location.search.slice(1).split('&')[0] : '');
+          const identifier = routeBillIdentifier(location.pathname);
+          if (/^[a-p]{64}$/.test(identifier) && !billHashMap.has(identifier)) { location.reload(); return; }
+          const currentPathDoc = billHashMap.get(identifier) || (/^\d+$/.test(identifier) ? identifier : '');
+          const currentDoc = currentPathDoc || currentParams.get('Fn_Doc_No') || currentParams.get('doc') || currentParams.get('doc_no') || currentParams.get('bill') || (/^\d+$/.test(location.search.slice(1).split('&')[0]) ? location.search.slice(1).split('&')[0] : '');
           const currentTable = currentParams.get('table') || '';
-          let targetPage = ['login', 'tables', 'menu', 'cart', 'history', 'closed'].includes(next) ? next : (this.staff && !currentDoc && !currentTable ? 'tables' : 'menu');
+          let targetPage = ['login', 'tables', 'menu', 'cart', 'history', 'closed'].includes(next) ? next : (currentDoc || currentTable ? 'menu' : (this.staff ? 'tables' : 'login'));
           if (targetPage === 'tables' && !this.staff) {
             targetPage = (currentDoc || currentTable) ? 'menu' : 'login';
           }
@@ -1146,7 +1173,7 @@ async syncBill() {
         const staffTables = location.pathname.includes('/staff/tables')
           ? location.pathname.replace(/\/staff\/tables(?:\/.*)?$/, '/staff/tables/')
           : new URL('staff/tables/', document.baseURI).pathname;
-        const targetUrl = this.page === 'tables' ? staffTables : `${location.pathname.replace(/\/[0-9]{6,10}\/?$/, '')}#login`;
+        const targetUrl = this.page === 'tables' ? staffTables : new URL('.', document.baseURI).pathname;
         history.pushState(history.state, '', targetUrl);
       } else {
         if (location.hash !== '#' + this.page) {

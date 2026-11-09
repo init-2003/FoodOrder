@@ -34,7 +34,7 @@
       const response = await fetch('api/auth.php', {method:'POST', headers:{'Content-Type':'application/json', 'Accept':'application/json', 'X-CSRF-Token':window.staffCsrf}, body:JSON.stringify({action:'logout'})});
       if (!response.ok) throw new Error();
       try { localStorage.removeItem('imdee:staff'); } catch {}
-      window.location.href = './#login';
+      window.location.href = './';
     } catch { alert(readLanguage() === 'en' ? 'Unable to log out. Please try again.' : 'ออกจากระบบไม่สำเร็จ กรุณาลองอีกครั้ง'); event.currentTarget.disabled = false; }
   });
   apply();

@@ -66,23 +66,16 @@ service-ordering/
 │   ├── Middlewares/          # ตัวกรองสิทธิ์ เช่น ตรวจสอบเซสชันพนักงาน (staff-access.php)
 │   ├── Security/             # ความปลอดภัย เซสชัน และ rate limiter
 │   ├── Services/             # Business Logic สำหรับบิล โต๊ะ เมนู ออเดอร์
-│   └── Views/                # แม่แบบหน้าจอ HTML (app.php, tables.php, staff.php, food-images.php)
+│   └── Views/                # แม่แบบหน้าจอ HTML (app.php และหน้าพนักงานใน Staff/)
 ├── config/                   # ไฟล์ตั้งค่าระบบ ฐานข้อมูล และ development router
 ├── database/migrations/      # ไฟล์ migration สำหรับตรวจสอบและเตรียมฐานข้อมูล
 ├── docs/                     # เอกสารระบบ (README.md, design.md, Agent.md)
-├── public/                   # Public Web Root (ไฟล์ที่เปิดเผยผ่านเว็บ)
-│   ├── .htaccess             # Apache Rewrite สำหรับ Clean URLs และเส้นทางพนักงาน
-│   ├── index.php             # Front Controller หลักของระบบ
+├── index.php                 # Front Controller หลักของระบบ
+├── public/                   # ไฟล์สาธารณะ (assets และ PWA)
 │   ├── manifest.php          # PWA Manifest
 │   ├── sw.js                 # Service Worker สำหรับ PWA และโหมดออฟไลน์
 │   ├── offline.html          # หน้าจอแสดงเมื่อไม่มีการเชื่อมต่อเครือข่าย
-│   ├── api/                  # Entry points ของ API (ส่งต่อไปยัง routes/api.php)
-│   ├── assets/               # Static assets (css, js, images, fonts, vendor)
-│   └── staff/                # หน้าสำหรับพนักงาน (ต้องผ่านการล็อกอิน)
-│       ├── index.php         # หน้าหลักพนักงาน (Staff Portal: /public/staff/)
-│       ├── menus/            # จัดการรายการอาหารและรูปภาพ (/public/staff/menus/)
-│       └── tables/           # หน้ารวมโต๊ะและสั่งอาหาร (/public/staff/tables/)
-│           └── .htaccess     # Rewrite สำหรับ /public/staff/tables/{bill}
+│   └── assets/               # Static assets (css, js, images, fonts)
 ├── routes/                   # ตารางกำหนดเส้นทาง URL
 │   ├── web.php               # เส้นทางหน้าเว็บ (Customer, Staff)
 │   └── api.php               # เส้นทาง API ทั้งหมด
@@ -93,20 +86,20 @@ service-ordering/
 ### รูปแบบเส้นทาง URL (Routing Structure)
 
 - **ฝั่งลูกค้า (Customer)** — สแกน QR Code เข้าตรงตามเลขบิล ไม่ต้องล็อกอิน ระบบดึงโต๊ะให้อัตโนมัติ:
-  - เมนูอาหาร: `http://localhost/service-ordering/public/{bill}#menu` (เช่น `.../public/68005654#menu`)
-  - ตะกร้าสินค้า: `http://localhost/service-ordering/public/{bill}#cart`
-  - ประวัติการสั่ง: `http://localhost/service-ordering/public/{bill}#history`
+  - เมนูอาหาร: `http://localhost/service-ordering/{bill}#menu` (เช่น `.../68005654#menu`)
+  - ตะกร้าสินค้า: `http://localhost/service-ordering/{bill}#cart`
+  - ประวัติการสั่ง: `http://localhost/service-ordering/{bill}#history`
 - **ฝั่งพนักงาน (Staff)** — มีระบบตรวจสอบสิทธิ์และเซสชัน (บังคับล็อกอิน):
-  - หน้าหลักพนักงาน (Portal): `http://localhost/service-ordering/public/staff/`
-  - หน้ารวมโต๊ะ (Table Selector): `http://localhost/service-ordering/public/staff/tables/`
-  - สั่งอาหารตามโต๊ะ/บิล: `http://localhost/service-ordering/public/staff/tables/{bill}#menu`
-  - จัดการเมนูและรูปอาหาร: `http://localhost/service-ordering/public/staff/menus/`
+  - หน้าหลักพนักงาน (Portal): `http://localhost/service-ordering/staff/`
+  - หน้ารวมโต๊ะ (Table Selector): `http://localhost/service-ordering/staff/tables/`
+  - สั่งอาหารตามโต๊ะ/บิล: `http://localhost/service-ordering/staff/tables/{bill}#menu`
+  - จัดการเมนูและรูปอาหาร: `http://localhost/service-ordering/staff/menus/`
 
-> **หมายเหตุ XAMPP / IIS**: หากตั้งค่า Web Root ของ Apache หรือ IIS ชี้ตรงไปยังโฟลเดอร์ `public/` โดยตรง ส่วนของ `/public/` จะถูกตัดออกจาก URL ได้โดยอัตโนมัติ และควรเปิดใช้งาน `mod_rewrite` เสมอ เพื่อให้การแมปเส้นทาง Clean URLs ทำงานได้อย่างสมบูรณ์
+กำหนด Web Root ของ Apache หรือ IIS เป็นรากโปรเจ็กต์ และเปิด Apache mod_rewrite หรือ IIS URL Rewrite Module ตามลำดับ กฎใน .htaccess และ web.config ส่ง URL ของ assets และ PWA ไปยัง public/ และส่งเส้นทางหน้าเว็บและ API ไปยัง index.php โดยป้องกันการเข้าถึงไฟล์ภายในโดยตรง
 
-หน้าเว็บและ API ใช้ `public/index.php` เป็น front controller เพียงจุดเดียว โดยเส้นทางเดิม เช่น `api/auth.php`, `staff/` และ `staff/menus/` ต้องอาศัย Apache mod_rewrite หรือ IIS URL Rewrite Module ส่ง request เข้า `index.php` ไฟล์ static และ manifest ถูกส่งโดยเว็บเซิร์ฟเวอร์โดยตรง การตรวจ Origin และ CSRF อยู่ใน middleware สำหรับ API และการตรวจสิทธิ์อยู่ใน Controller
+ลิงก์บิลลูกค้ารองรับ `/{hash}` และ `/{เลขบิล}` ส่วนพนักงานใช้ `/staff/tables/{hash}` หรือ `/staff/tables/{เลขบิล}` โดยต้องเข้าสู่ระบบก่อน ระบบค้น hash จาก `Fnt_Header.Fn_Qrcode_Order` ภายในสาขาที่กำหนด และใช้ hash เป็น URL เริ่มต้นเมื่อเปิดหรือเลือกโต๊ะ หากบิลเดิมไม่มี hash จะใช้เลขบิล สูตร hash คำนวณจากเลขบิลและไม่ใช่ token ลับสำหรับยืนยันสิทธิ์
 
-สำหรับ IIS ต้องติดตั้ง URL Rewrite Module เพื่อใช้ทุกเส้นทางที่ไม่ใช่ไฟล์ static ไฟล์ `public/web.config` กำหนดกฎเทียบกับโฟลเดอร์ public ทั้งนี้ต้องตรวจ handler PHP, สิทธิ์ storage และทดสอบการ rewrite บนเซิร์ฟเวอร์จริง
+สำหรับ IIS ต้องติดตั้ง URL Rewrite Module เพื่อใช้ทุกเส้นทางที่ไม่ใช่ไฟล์ static ไฟล์ `web.config` ที่รากโปรเจ็กต์กำหนดกฎ rewrite ทั้งนี้ต้องตรวจ handler PHP, สิทธิ์ storage และทดสอบการ rewrite บนเซิร์ฟเวอร์จริง
 ติดตั้งเป็น PWA
 
 เว็บไซต์มี manifest, ไอคอนสำหรับ Android/iOS และ service worker สำหรับแสดงหน้าแจ้งเตือนเมื่อไม่มีเครือข่าย โดยไม่แคชข้อมูลบิล เซสชัน ตะกร้า หรือ API สั่งอาหาร
@@ -175,4 +168,3 @@ PHP built-in server และ `config/router.php` ใช้พัฒนาเท
 # ตั้งค่าการเข้าสู่ระบบ
 
 ติดตั้ง production dependencies ด้วย `composer install --no-dev` และให้ IIS สามารถเขียนโฟลเดอร์ `storage/rate-limit` ได้ ระบบจำกัดการลองเข้าสู่ระบบ 20 ครั้งต่อ IP ในช่วง 5 นาที และรีเซ็ตเมื่อล็อกอินสำเร็จ เครื่องที่แชร์ IP เดียวกันจะใช้โควตาร่วมกัน หากใช้หลายเครื่องเซิร์ฟเวอร์ ต้องตั้งค่าที่เก็บและ lock แบบใช้ร่วมกันก่อนเพื่อให้ข้อจำกัดมีผลครอบคลุมทุกเครื่อง
-
