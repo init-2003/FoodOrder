@@ -16,8 +16,8 @@
     p { margin: 0; color: #718078; }
     header { position: absolute; top: 0; left: 0; right: 0; display: flex; align-items: center; justify-content: space-between; padding: 18px 28px; }
     .brand { display: flex; align-items: center; gap: 10px; }
-    .brand-mark { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 13px; background: #fa784e; color: white; }
-    .brand-mark svg { width: 26px; height: 26px; }
+    .brand-mark { display: grid; place-items: center; width: 40px; height: 40px; }
+    .brand-mark img { width: 100%; height: 100%; object-fit: contain; }
     .brand-copy { display: flex; flex-direction: column; line-height: 1; }
     .brand-th { font: 32px/1 'SOV Patigon', 'Noto Sans Thai', sans-serif; }
     .brand-en { color: #879488; font-size: 9px; letter-spacing: 1px; }
@@ -30,7 +30,7 @@
 <body>
   <header>
     <div class="brand" aria-label="อันเกิม">
-      <span class="brand-mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11h18a9 9 0 0 1-18 0ZM7 21h10M8 3v4m4-5v5m4-4v4"/></svg></span>
+      <span class="brand-mark"><img src="<?= htmlspecialchars(($publicBase ?? '/') . 'assets/images/restaurant-logo.svg', ENT_QUOTES, 'UTF-8') ?>" alt=""></span>
       <span class="brand-copy"><span class="brand-th">อันเกิม</span><span class="brand-en" lang="vi">Ăn cơm</span></span>
     </div>
     <div class="language" role="group" aria-label="Language / ภาษา"><button type="button" data-language="th" aria-pressed="true">TH</button><button type="button" data-language="en" aria-pressed="false">EN</button></div>

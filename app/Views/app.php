@@ -214,7 +214,7 @@ $base = ($base === '' || $base === '.') ? '/' : $base . '/';
 </defs></svg>
 
 <aside class="sidebar" :inert="detailOpen" x-show="page !== 'login' && page !== 'tables'">
-  <a class="brand" href="./" @click.prevent="staff ? openTableSelector() : navigate('menu')" :aria-label="t('อันเกิม')"><span class="brand-mark"><svg class="icon"><use href="#i-bowl"/></svg></span><span><span class="brand-th" x-text="t('อันเกิม')">อันเกิม</span><span class="brand-en" lang="vi">Ăn cơm</span></span></a>
+  <a class="brand" href="./" @click.prevent="staff ? openTableSelector() : navigate('menu')" :aria-label="t('อันเกิม')"><span class="brand-mark"><img src="assets/images/restaurant-logo.svg" alt=""></span><span><span class="brand-th" x-text="t('อันเกิม')">อันเกิม</span><span class="brand-en" lang="vi">Ăn cơm</span></span></a>
   <div class="sidebar-rule"></div>
   <span class="nav-label"><span x-text="t('มื้ออร่อยของคุณ')">มื้ออร่อยของคุณ</span></span>
   <nav class="space-y-2" :aria-label="t('เมนูหลัก')">

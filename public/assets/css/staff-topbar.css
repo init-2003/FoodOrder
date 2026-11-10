@@ -263,6 +263,9 @@ body.has-staff-sidebar :is(.head, .topbar) .account-menu > summary .hamburger-ic
   display: block;
   object-fit: cover;
 }
+
+.brand .brand-mark { background: transparent !important; box-shadow: none !important; }
+.brand .brand-mark img { display: block; width: 100%; height: 100%; object-fit: contain; }
 .account-menu-profile-info {
   display: flex;
   flex-direction: column;
