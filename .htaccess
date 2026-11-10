@@ -2,6 +2,7 @@
     RewriteEngine On
     # Only explicitly public files may bypass the front controller.
     RewriteRule (^|/)\. - [F,L]
+    RewriteRule ^public/assets/vendor/(?:alpine|sweetalert2)\.min\.js$ - [L,NC]
     RewriteRule ^(?:app|config|database|docs|routes|storage|tests|vendor|public)(?:/|$) - [F,L,NC]
     RewriteRule ^(?:assets/.+\.(?:css|js|json|png|jpe?g|svg|ttf|woff2?|txt)|manifest\.php|sw\.js|offline\.html)$ public/$0 [END,NC]
     RewriteRule ^index\.php$ - [L]

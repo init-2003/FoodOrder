@@ -159,7 +159,7 @@ $base = ($base === '' || $base === '.') ? '/' : $base . '/';
       'canViewExpenses' => !empty($canViewExpenses),
     ] : null, JSON_UNESCAPED_UNICODE) ?>;
   </script>
-  <script defer src="assets/vendor/sweetalert2.min.js"></script>
+  <script defer src="public/assets/vendor/sweetalert2.min.js"></script>
   <script defer src="assets/js/translations.js?v=<?= filemtime(__DIR__ . '/../../public/assets/js/translations.js') ?>"></script>
   <script defer src="assets/js/pwa.js?v=<?= filemtime(__DIR__ . '/../../public/assets/js/pwa.js') ?>"></script>
   <script>window.appBranch = <?= json_encode($branchId, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;</script>
@@ -167,7 +167,7 @@ $base = ($base === '' || $base === '.') ? '/' : $base . '/';
   <script>window.csrfToken = <?= json_encode($_SESSION['csrf_token'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;</script>
   <script defer src="assets/js/app.js?v=<?= filemtime(__DIR__ . '/../../public/assets/js/app.js') ?>"></script>
   <script defer src="assets/js/account-menu.js?v=<?= filemtime(__DIR__ . '/../../public/assets/js/account-menu.js') ?>"></script>
-  <script defer src="assets/vendor/alpine.min.js"></script>
+  <script defer src="public/assets/vendor/alpine.min.js"></script>
 </head>
 <body class="<?= (!empty($staffEmId) && ($initialPage ?? '') !== 'login') ? 'has-staff-sidebar' : '' ?>" x-data="orderingApp('<?= htmlspecialchars($initialPage, ENT_QUOTES, 'UTF-8') ?>', <?= !empty($initialClosed) ? 'true' : 'false' ?>, '<?= htmlspecialchars((string)($displayTable ?? ''), ENT_QUOTES, 'UTF-8') ?>', '<?= htmlspecialchars((string)($displayDoc ?? ''), ENT_QUOTES, 'UTF-8') ?>', <?= !empty($initialCancelled) ? 'true' : 'false' ?>)" @keydown.escape.window="closeDetail()" :class="{'dialog-open': detailOpen, 'detail-note-active': detailOpen && noteFocused, 'closed-bill-page': page === 'closed' || page === 'login', 'has-staff-sidebar': staff && page !== 'login'}">
 <svg class="icon-defs" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs>

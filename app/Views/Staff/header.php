@@ -28,6 +28,6 @@
 </header>
 <?php if (!$orderingHeader): ?>
 <script>window.staffCsrf = <?= json_encode($_SESSION['csrf_token'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;</script>
-<script defer src="assets/vendor/sweetalert2.min.js"></script>
+<script defer src="public/assets/vendor/sweetalert2.min.js"></script>
 <script defer src="assets/js/account-menu.js?v=<?= filemtime(__DIR__ . '/../../../public/assets/js/account-menu.js') ?>"></script>
 <?php endif; ?>

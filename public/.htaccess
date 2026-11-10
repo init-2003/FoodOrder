@@ -1,6 +1,7 @@
 <IfModule mod_rewrite.c>
     RewriteEngine On
     # Reject direct requests while allowing rewrites from the project root.
+    RewriteCond %{THE_REQUEST} !\s/+(?:[^\s?/]+/)*public/assets/vendor/(?:alpine|sweetalert2)\.min\.js(?:[\s?]) [NC]
     RewriteCond %{THE_REQUEST} \s/+(?:[^\s?/]+/)*public(?:/|[\s?]) [NC]
     RewriteRule ^ - [F,L]
     RewriteRule ^web\.config$ - [F,L,NC]
