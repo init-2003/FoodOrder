@@ -42,7 +42,7 @@ $months = ['มกราคม','กุมภาพันธ์','มีนา�
   <meta charset="utf-8">
   <base href="<?= htmlspecialchars($appBase ?? './', ENT_QUOTES, 'UTF-8') ?>">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title data-i18n="ค่าใช้จ่าย · อันเกิม">ค่าใช้จ่าย · อันเกิม</title>
+  <?php require __DIR__ . '/../browser-head.php'; ?>
   <link rel="stylesheet" href="assets/css/staff-images.css?v=<?= filemtime(__DIR__ . '/../../../public/assets/css/staff-images.css') ?>">
   <link rel="stylesheet" href="assets/css/expenses.css?v=<?= filemtime(__DIR__ . '/../../../public/assets/css/expenses.css') ?>">
 </head>
@@ -62,7 +62,7 @@ $months = ['มกราคม','กุมภาพันธ์','มีนา�
   <?php else: ?>
   <div class="expense-layout">
     <section class="expense-panel expense-main" aria-labelledby="expense-details-title">
-      <div class="expense-summary"><span data-i18n="ค่าใช้จ่าย">ค่าใช้จ่าย</span><strong<?= $report['total'] === null ? ' data-i18n="ไม่มีข้อมูล"' : '' ?>><?= $report['total'] === null ? 'ไม่มีข้อมูล' : '฿ ' . number_format($report['total'], 2) ?></strong><small data-i18n="ยอดรวมทั้งหมด">ยอดรวมทั้งหมด</small></div>
+      <div class="expense-summary"><span data-i18n="รวมค่าใช้จ่ายทั้งหมด">รวมค่าใช้จ่ายทั้งหมด</span><strong<?= $report['total'] === null ? ' data-i18n="ไม่มีข้อมูล"' : '' ?>><?= $report['total'] === null ? 'ไม่มีข้อมูล' : '฿ ' . number_format($report['total'], 2) ?></strong></div>
       <div class="expense-section-heading"><h2 id="expense-details-title" data-i18n="รายจ่ายแยกตามประเภท">รายจ่ายแยกตามประเภท</h2><span><?= count($report['items']) ?> <span data-i18n-count="<?= count($report['items']) ?>">ประเภท</span></span></div>
       <?php if (!$report['items']): ?><p class="expense-message" data-i18n="ไม่มีข้อมูลรายจ่ายในเดือนนี้">ไม่มีข้อมูลรายจ่ายในเดือนนี้</p><?php else: ?>
       <?php

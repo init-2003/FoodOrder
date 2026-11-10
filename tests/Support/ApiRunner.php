@@ -14,6 +14,7 @@ function runApi(string $endpoint, string $method = 'GET', array $query = [], arr
         }
     }
     if (!copy($root . '/index.php', $tmp . '/index.php')) throw new RuntimeException('Cannot prepare front controller');
+    if (!copy($root . '/public/index.php', $tmp . '/public/index.php')) throw new RuntimeException('Cannot prepare public front controller');
     mkdir($tmp . '/routes', 0700, true);
     foreach (glob($root . '/routes/*.php') as $file) {
         if (!copy($file, $tmp . '/routes/' . basename($file))) throw new RuntimeException('Cannot prepare routes');
@@ -54,7 +55,7 @@ PHP;
         unlink($tmp . '/index.php');
         foreach (glob($tmp . '/routes/*.php') as $file) unlink($file);
         rmdir($tmp . '/routes');
-        rmdir($tmp . '/public'); rmdir($tmp . '/app'); unlink($tmp . '/run.php');
+        unlink($tmp . '/public/index.php'); rmdir($tmp . '/public'); rmdir($tmp . '/app'); unlink($tmp . '/run.php');
         foreach (glob($tmp . '/sess_*') as $sessionFile) unlink($sessionFile);
         rmdir($tmp);
     }

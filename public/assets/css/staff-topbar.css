@@ -257,10 +257,11 @@ body.has-staff-sidebar :is(.head, .topbar) .account-menu > summary .hamburger-ic
   align-items: center;
   justify-content: center;
 }
-.account-menu-avatar svg {
+.account-menu-avatar img {
   width: 100%;
   height: 100%;
   display: block;
+  object-fit: cover;
 }
 .account-menu-profile-info {
   display: flex;
@@ -351,7 +352,7 @@ body.has-staff-sidebar :is(.head, .topbar) .account-menu > summary .hamburger-ic
   body.has-staff-sidebar .account-menu-panel {
     width: 260px !important;
     max-width: 260px !important;
-    border-radius: 0 !important;
+    border-radius: 0 24px 24px 0 !important;
     border-right: 1px solid #edf0eb !important;
     box-shadow: 2px 0 10px rgba(38, 54, 46, .04) !important;
     padding: 24px 20px 20px !important;

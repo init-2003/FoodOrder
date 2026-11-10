@@ -11,7 +11,7 @@ $branch = trim((string)(getenv('DEFAULT_BRANCH_ID') ?: ''));
   <base href="<?= htmlspecialchars($appBase ?? './', ENT_QUOTES, 'UTF-8') ?>">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#ffffff">
-  <title>จัดการรายการอาหาร · อันเกิม</title>
+  <?php require __DIR__ . '/../browser-head.php'; ?>
   <link rel="stylesheet" href="assets/css/staff-images.css?v=<?= filemtime(__DIR__ . '/../../../public/assets/css/staff-images.css') ?>">
   <link rel="stylesheet" href="assets/css/food-images.css?v=<?= filemtime(__DIR__ . '/../../../public/assets/css/food-images.css') ?>">
 </head>

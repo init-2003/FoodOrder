@@ -24,7 +24,7 @@
     'ค่าใช้จ่าย · อันเกิม': 'Expenses · An Com',
     'ภาพรวมรายจ่ายของร้าน แยกตามประเภท': 'An overview of store expenses by category',
     'เดือน': 'Month', 'ปี (ค.ศ.)': 'Year (CE)', 'แสดงรายงาน': 'Show report',
-    'ค่าใช้จ่าย': 'Expenses', 'ยอดรวมทั้งหมด': 'Grand total',
+    'ค่าใช้จ่าย': 'Expenses', 'ยอดรวมทั้งหมด': 'Grand total', 'รวมค่าใช้จ่ายทั้งหมด': 'Total expenses',
     'รายจ่ายแยกตามประเภท': 'Expenses by category', 'ประเภท': 'categories',
     'รายละเอียดรายงาน': 'Report details', 'ช่วงเวลา': 'Period', 'รายการ': 'Items', 'บาท': 'baht',
     'ไม่มีข้อมูล': 'No data', 'ไม่มีข้อมูลรายจ่ายในเดือนนี้': 'No expenses for this month',

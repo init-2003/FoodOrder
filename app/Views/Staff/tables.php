@@ -1,8 +1,8 @@
       <!-- 2. Table Selection Section (Main System UI Style) -->
-      <section x-show="page === 'tables'" <?= ($initialPage !== 'tables') ? 'style="display: none;"' : '' ?> x-cloak class="tables-section page-animated" aria-label="เลือกโต๊ะ">
+      <section x-show="page === 'tables'" <?= ($initialPage !== 'tables') ? 'style="display: none;"' : '' ?> x-cloak class="tables-section page-animated" aria-label="เลือกโต๊ะ/เปิดบิล">
         <div class="tables-heading manage-heading">
           <div>
-            <h1 data-i18n="เลือกโต๊ะ" x-text="t('เลือกโต๊ะ')">เลือกโต๊ะ</h1>
+            <h1 data-i18n="เลือกโต๊ะ/เปิดบิล" x-text="t('เลือกโต๊ะ/เปิดบิล')">เลือกโต๊ะ/เปิดบิล</h1>
           </div>
         </div>
         <div class="table-category-sticky" :class="{'is-stuck': tableCategoryStuck}"><div class="category-list" :class="{'category-list-filtered': tableFilter !== 'all'}" role="group" :aria-label="t('กรองสถานะโต๊ะ')">

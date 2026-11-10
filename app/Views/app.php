@@ -19,8 +19,7 @@ $base = ($base === '' || $base === '.') ? '/' : $base . '/';
   <meta name="apple-mobile-web-app-title" content="อันเกิม">
   <meta name="description" content="อันเกิม — เลือกความอร่อยในแบบคุณ สั่งอาหารจากโต๊ะได้ง่าย ๆ">
   <base href="<?= htmlspecialchars($base, ENT_QUOTES, 'UTF-8') ?>">
-  <title>อันเกิม · อาหารเวียดนาม</title>
-  <link rel="icon" href="assets/images/favicon.svg" type="image/svg+xml">
+  <?php require __DIR__ . '/browser-head.php'; ?>
   <link rel="manifest" href="manifest.php">
   <link rel="apple-touch-icon" href="assets/images/pwa-180.png">
   <script>

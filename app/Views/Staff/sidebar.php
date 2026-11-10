@@ -17,18 +17,7 @@ $staffHeaderRole = htmlspecialchars(trim((string) ($_SESSION['Status'] ?? 'Staff
     <div class="account-menu-divider"></div>
     <div class="account-menu-profile">
       <div class="account-menu-avatar" aria-hidden="true">
-        <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <defs>
-            <clipPath id="accountMenuAvatarClip">
-              <circle cx="50" cy="50" r="50"/>
-            </clipPath>
-          </defs>
-          <circle cx="50" cy="50" r="50" fill="#efece8"/>
-          <g clip-path="url(#accountMenuAvatarClip)">
-            <circle cx="50" cy="35" r="20.5" fill="#c6c3bd"/>
-            <path d="M35 52 C35 52 22 58 16 68 C12 75 11 83 10 92 L10 100 L90 100 L90 92 C89 83 88 75 84 68 C78 58 65 52 65 52 Z" fill="#c6c3bd"/>
-          </g>
-        </svg>
+        <img src="assets/images/user.png" alt="">
       </div>
       <div class="account-menu-profile-info">
         <div class="account-menu-name"><span class="account-menu-name-text" <?php if ($orderingHeader): ?>x-text="staff?.name || ''"<?php endif; ?>><?= $orderingHeader ? '' : $staffHeaderName ?></span></div>

@@ -4,7 +4,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title><?= $hashLookupUnavailable ? 'ไม่สามารถเชื่อมต่อข้อมูลบิลได้' : 'ไม่พบข้อมูลบิล' ?> · อันเกิม</title>
+  <?php require __DIR__ . '/browser-head.php'; ?>
   <link rel="stylesheet" href="<?= htmlspecialchars(($publicBase ?? '/') . 'assets/css/font-remote.css', ENT_QUOTES, 'UTF-8') ?>">
   <style>
     * { box-sizing: border-box; }
@@ -51,7 +51,6 @@
         document.documentElement.lang = language;
         document.getElementById('message-title').textContent = messages[language][0];
         document.getElementById('message-detail').textContent = messages[language][1];
-        document.title = messages[language][0] + ' · อันเกิม';
         document.querySelectorAll('[data-language]').forEach(function (button) { button.setAttribute('aria-pressed', String(button.dataset.language === language)); });
         try { localStorage.setItem('imdee:language', language); } catch (e) {}
       }

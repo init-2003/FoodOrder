@@ -2,15 +2,24 @@
   const { branch, csrf } = window.foodImagesConfig;
   const items = document.querySelector('#items'), status = document.querySelector('#status');
   const search = document.querySelector('#search'), category = document.querySelector('#category');
-  let products = [];
+  let products = [], categories = [];
   const t = text => window.staffTranslate ? window.staffTranslate(text) : text;
   const escape = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' })[char]);
-  function render() {
+  function render(animate = false) {
     const query = search.value.trim().toLocaleLowerCase();
     const matching = products.filter(item => (!category.value || item.category === category.value) && `${item.name} ${item.id}`.toLocaleLowerCase().includes(query));
-    items.innerHTML = matching.map(item => `<article class="item"><img src="${escape(item.image)}" alt="" loading="lazy"><div class="item-info"><strong>${escape(item.name)}</strong><small>${escape(item.id)} · ฿${Number(item.price).toLocaleString('th-TH')}</small><button type="button" class="upload">${t(item.hasImage ? 'เปลี่ยนรูป' : 'เพิ่มรูป')}</button><input type="file" accept="image/jpeg,image/png,image/webp"></div></article>`).join('');
+    const english = document.documentElement.lang === 'en';
+    items.innerHTML = matching.map(item => {
+      const categoryName = categories.find(cat => cat.id === item.category)?.name;
+      const unit = String(item.unit ?? '').trim();
+      return `<article class="item"><div class="item-image"><img src="${escape(item.image)}" alt="" loading="lazy"></div><div class="item-info"><strong>${escape(item.name)}</strong><span class="item-code">${english ? 'Code' : 'รหัส'}: ${escape(item.id)}</span>${categoryName ? `<span class="item-category">${escape(categoryName)}</span>` : ''}<span class="item-price">฿${Number(item.price).toLocaleString('th-TH', { maximumFractionDigits: 2 })}${unit ? ` <span>/ ${escape(unit)}</span>` : ''}</span><button type="button" class="upload">${t(item.hasImage ? 'เปลี่ยนรูป' : 'เพิ่มรูป')}</button><input type="file" accept="image/jpeg,image/png,image/webp"></div></article>`;
+    }).join('');
     status.textContent = matching.length ? `${matching.length} ${document.documentElement.lang === 'en' ? 'items' : 'รายการ'}` : t('ไม่พบรายการอาหาร');
     [...items.children].forEach((card, index) => {
+      if (animate === true) {
+        card.style.setProperty('--entrance-delay', `${index * 55}ms`);
+        card.classList.add('item-enter');
+      }
       const button = card.querySelector('button'), input = card.querySelector('input');
       button.addEventListener('click', () => input.click());
       input.addEventListener('change', async () => {
@@ -37,9 +46,9 @@
     try {
       const response = await fetch(`api/menu.php?${new URLSearchParams({branch})}`, {headers:{Accept:'application/json'}});
       if (!response.ok) throw new Error('ไม่สามารถโหลดรายการอาหารได้');
-      const data = await response.json(); products = data.items;
+      const data = await response.json(); products = data.items; categories = data.categories;
       for (const cat of data.categories) { const option = document.createElement('option'); option.value = cat.id; option.textContent = cat.name; category.append(option); }
-      render();
+      render(true);
     } catch (error) { status.textContent = error.message || 'ไม่สามารถโหลดรายการอาหารได้'; }
   }
   search.addEventListener('input', render); category.addEventListener('change', render); init();
