@@ -6,7 +6,7 @@
 .food-image-page .filters { display: grid; grid-template-columns: minmax(0, 1fr) minmax(170px, 220px); gap: 10px; margin: 24px 0 16px; }
 .food-image-page .menu-search { display: flex; align-items: center; gap: 11px; min-width: 0; padding: 0 17px; background: #fafbf9; border: 1px solid #e3e8e2; border-radius: 999px; box-shadow: 0 4px 14px #263a310d; }
 .food-image-page .menu-search svg { flex: none; width: 18px; height: 18px; color: #829085; }
-.food-image-page .filters .menu-search input { width: 100%; min-width: 0; height: 48px; padding: 0; border: 0; outline: 0; background: transparent; box-shadow: none; font-size: 14px; }
+.food-image-page .filters .menu-search input { width: 100%; min-width: 0; height: 48px; padding: 0; border: 0; outline: 0; background: transparent; box-shadow: none; font-size: 16px; }
 .food-image-page .menu-search:focus-within { border-color: #ffb49b; }
 .food-image-page .filters select { appearance: none; background-image: linear-gradient(45deg, transparent 50%, #415449 50%), linear-gradient(135deg, #415449 50%, transparent 50%); background-position: right 21px center, right 16px center; background-size: 5px 5px, 5px 5px; background-repeat: no-repeat; min-width: 0; height: 50px; padding: 0 38px 0 17px; border: 1px solid #e3e8e2; border-radius: 999px; background-color: #fafbf9; color: #415449; font-size: 14px; box-shadow: 0 4px 14px #263a310d; cursor: pointer; }
 .food-image-page #status { margin: 0 2px; color: #879488; font-size: 13px; }

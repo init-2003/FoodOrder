@@ -1,4 +1,8 @@
 /* Shared staff header appearance on the ordering and staff screens. */
+input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"]),
+textarea,
+select { font-size: 16px !important; }
+
 @font-face {
   font-family: 'Staff Header Noto';
   src: url('../fonts/noto-sans-thai-400.ttf') format('truetype');
@@ -153,11 +157,10 @@ body.has-staff-sidebar :is(.head, .topbar) .account-menu > summary .hamburger-ic
 .account-menu-backdrop {
   display: block;
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  height: 100dvh;
+  top: -100vmax;
+  left: -100vmax;
+  width: 300vmax;
+  height: 300vmax;
   background: rgba(18, 28, 22, 0.72);
   z-index: 999;
   opacity: 0;

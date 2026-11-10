@@ -6090,11 +6090,10 @@ html[data-initial-route="tables"] .mobile-brand { display: flex !important; }
 .account-menu-backdrop {
   display: block;
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  height: 100dvh;
+  top: -100vmax;
+  left: -100vmax;
+  width: 300vmax;
+  height: 300vmax;
   background: rgba(18, 28, 22, 0.72);
   z-index: 999;
   opacity: 0;
