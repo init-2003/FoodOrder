@@ -11,10 +11,6 @@
           <button type="button" @click="setLanguage('th')" :class="{'active': language === 'th'}" :aria-pressed="language === 'th'">TH</button>
           <button type="button" @click="setLanguage('en')" :class="{'active': language === 'en'}" :aria-pressed="language === 'en'">EN</button>
         </div>
-        <button type="button" class="desktop-staff-btn" x-show="!staff && page !== 'login'" x-cloak @click="navigate('login')" :title="t('เข้าสู่ระบบพนักงาน')">
-          <svg class="icon" aria-hidden="true"><use href="#i-user"/></svg>
-          <span x-text="t('พนักงาน')">พนักงาน</span>
-        </button>
       </div>
 <?php endif; ?>
   </div>

@@ -2452,6 +2452,10 @@ html[data-page="menu"] .closed-section {
   padding: 50px 15px
 }
 
+.closed-section.page-animated {
+  animation: none;
+}
+
 body.closed-bill-page,
 body.closed-bill-page .workspace,
 body.closed-bill-page .content-layout,
@@ -5283,6 +5287,40 @@ html[data-initial-route="history"] body {
 html[data-page="history"] :is(.workspace, .content-layout, .main-content, .history-section),
 html[data-initial-route="history"] :is(.workspace, .content-layout, .main-content, .history-section) {
   background: #fff;
+}
+
+html[data-page="history"] .topbar,
+html[data-initial-route="history"] .topbar {
+  background: #fff;
+  border: 0;
+  box-shadow: none;
+}
+
+@media (min-width: 761px) and (orientation: landscape), (min-width: 1101px) {
+  html[data-page="history"] .content-layout,
+  html[data-initial-route="history"] .content-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  html[data-page="history"] .workspace > .desktop-top-nav,
+  html[data-initial-route="history"] .workspace > .desktop-top-nav {
+    justify-content: flex-start;
+    width: calc(100% - 60px);
+    max-width: 1170px;
+    margin-inline: auto;
+    padding: 12px 0 0;
+  }
+
+  html[data-page="history"] .history-section,
+  html[data-initial-route="history"] .history-section {
+    max-width: 1170px;
+    margin-inline: auto;
+  }
+
+  html[data-page="history"] .cart-panel,
+  html[data-initial-route="history"] .cart-panel {
+    display: none !important;
+  }
 }
 
 .food-card {

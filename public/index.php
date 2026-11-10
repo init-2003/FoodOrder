@@ -8,7 +8,17 @@ $publicBase .= '/';
 $resolved = resolvePublicRoute((string)($_SERVER['REQUEST_URI'] ?? '/'), $scriptName);
 if (isset($resolved['redirect'])) { header('Location: ' . $resolved['redirect'], true, 301); exit; }
 $route = $resolved['route'];
-if ($route === null) { http_response_code(404); exit('Not found'); }
+if ($route === null) {
+    http_response_code(404);
+    $path = parse_url((string)($_SERVER['REQUEST_URI'] ?? '/'), PHP_URL_PATH);
+    $relativePath = is_string($path) && str_starts_with($path, $publicBase) ? substr($path, strlen($publicBase)) : '';
+    if (preg_match('/^[a-zA-Z0-9_-]+\/?$/D', $relativePath)) {
+        $hashLookupUnavailable = false;
+        require dirname(__DIR__) . '/app/Views/bill-unavailable.php';
+        exit;
+    }
+    exit('Not found');
+}
 if (isset($resolved['bill'])) $_GET['bill'] = $resolved['bill'];
 if (isset($resolved['billHash'])) $_GET['billHash'] = $resolved['billHash'];
 $routes = require dirname(__DIR__) . '/routes/web.php';

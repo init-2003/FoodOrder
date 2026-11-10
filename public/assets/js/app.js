@@ -1180,7 +1180,7 @@ async syncBill() {
           history.pushState(history.state, '', `${location.pathname}${location.search}#${this.page}`);
         }
       }
-      if (window.scrollY > 0) window.scrollTo({ top: 0, behavior: repeatPage ? 'smooth' : 'instant' });
+      if (window.scrollY > 0 && !(repeatPage && nextPage === 'closed')) window.scrollTo({ top: 0, behavior: repeatPage ? 'smooth' : 'instant' });
     },
     openMenuSearch() {
       const isTables = this.page === 'tables';
