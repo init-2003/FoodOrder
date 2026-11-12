@@ -515,20 +515,20 @@ body :is(.search-field input, .menu-search input) { outline: none; box-shadow: n
 body.food-image-page .filters :is(.menu-search, select) { background-color: #fff; border-color: #dfe5dd; box-shadow: none; }
 body.food-image-page .filters :is(.menu-search:focus-within, select:focus) { border-color: #fa633b; outline: 2px solid #fa633b; outline-offset: 2px; box-shadow: none; }
 
-/* Keep one orange border around a focused field. */
+/* Keep the focus ring visible without changing the field's layout. */
 body :is(.staff-field input:focus, .search-field:focus-within, .menu-search:focus-within, .filters select:focus, .expense-filters select:focus, .detail-body textarea:focus),
 body.food-image-page .filters :is(.menu-search:focus-within, select:focus) {
-  border: 2px solid #fa633b;
+  border: 1px solid #fa633b;
   outline: none;
-  box-shadow: none;
+  box-shadow: inset 0 0 0 1px #fa633b;
 }
 /* Prevent older search styles from adding a second focus ring. */
 body .menu-search-top .search-field:focus-within,
 body .tables-search-field:focus-within,
 body .search-field:focus-within {
-  border: 2px solid #fa633b !important;
+  border: 1px solid #fa633b !important;
   outline: none !important;
-  box-shadow: none !important;
+  box-shadow: inset 0 0 0 1px #fa633b !important;
 }
 body .search-field input:focus { border: 0 !important; outline: none !important; box-shadow: none !important; }
 /* Align staff page content with the expense report heading. */
