@@ -16,3 +16,8 @@ it('resolves hash links for customers and staff without confusing bill numbers',
         ->and(resolvePublicRoute('/shop/staff/tables/' . $hash, '/shop/index.php'))->toBe(['route' => '/staff/tables/', 'billHash' => $hash])
         ->and(resolvePublicRoute('/shop/' . str_repeat('q', 64), '/shop/index.php')['route'])->toBeNull();
 });
+
+it('redirects old staff.php links to the current staff route', function () {
+    expect(resolvePublicRoute('/staff.php', '/index.php'))->toBe(['route' => null, 'redirect' => '/staff/'])
+        ->and(resolvePublicRoute('/shop/staff.php', '/shop/index.php'))->toBe(['route' => null, 'redirect' => '/shop/staff/']);
+});

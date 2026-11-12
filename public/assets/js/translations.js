@@ -52,7 +52,7 @@ const UI_EN = {
   'ต้องการเปิดบิลใหม่และเริ่มสั่งอาหารสำหรับโต๊ะนี้ใช่หรือไม่?':'Open a new POS bill and start ordering for this table?',
   'เปิดโต๊ะ':'Open Table', 'เปิดบิลและสั่งอาหาร':'Open Bill & Order', 'เปิดบิลสำเร็จ':'Bill Opened',
   'หมายเลขโต๊ะที่เลือก':'Selected Table', 'ออกจากระบบพนักงาน':'Sign out',
-  'อันเกิม':'An Gem', 'อันเกิม สาขาหลัก':'An Gem Main Branch', 'ล้างคำค้น':'Clear search',
+  'อันเกิม':'An Goem', 'อันเกิม สาขาหลัก':'An Goem Main Branch', 'ล้างคำค้น':'Clear search',
   'กรุณาเข้าสู่ระบบ เพื่อเลือกโต๊ะ เปิดบิล และรับรายการอาหาร':'Sign in to select tables, open bills, and take orders.',
   'หน้าหลักพนักงาน':'Staff Home', 'เลือกการทำงาน':'Select Action',
   'เลือกโต๊ะ/เปิดบิล':'Tables / Open bill', 'จัดการเมนูอาหาร':'Manage menu', 'ค่าใช้จ่าย':'Expenses',

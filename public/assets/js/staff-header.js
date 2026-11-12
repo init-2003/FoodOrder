@@ -1,6 +1,6 @@
 (() => {
   const translations = {
-    'เมนู': 'Menu', 'ภาษา': 'Language', 'ออกจากระบบ': 'Log out',
+    'อันเกิม': 'An Goem', 'เมนู': 'Menu', 'ภาษา': 'Language', 'ออกจากระบบ': 'Log out',
     'เมนูการทำงาน': 'Staff menu', 'ปิดเมนู': 'Close menu',
     'หน้าหลักพนักงาน': 'Staff home', 'เลือกการทำงาน': 'Choose an action', 'จัดการโต๊ะและรูปเมนูอาหารของร้าน': 'Manage tables and food photos',
     'เลือกโต๊ะ': 'Select table', 'เปิดโต๊ะและรับรายการอาหาร': 'Open tables and take orders', 'จัดการรายการอาหาร': 'Manage food items',

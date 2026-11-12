@@ -5,7 +5,6 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <?php require __DIR__ . '/browser-head.php'; ?>
-  <link rel="stylesheet" href="<?= htmlspecialchars(($publicBase ?? '/') . 'assets/css/font-remote.css', ENT_QUOTES, 'UTF-8') ?>">
   <style>
     * { box-sizing: border-box; }
     body { margin: 0; min-height: 100vh; min-height: 100dvh; display: grid; place-items: center; background: #fff; color: #263a31; font: 16px/1.6 'Noto Sans Thai', system-ui, sans-serif; }
@@ -30,7 +29,7 @@
 <body>
   <header>
     <div class="brand" aria-label="อันเกิม">
-      <span class="brand-mark"><img src="<?= htmlspecialchars(($publicBase ?? '/') . 'assets/images/restaurant-logo.svg', ENT_QUOTES, 'UTF-8') ?>" alt=""></span>
+      <span class="brand-mark"><img src="<?= htmlspecialchars(($publicBase ?? '/') . 'assets/images/restaurant-logo.svg?v=' . assetVersion('assets/images/restaurant-logo.svg'), ENT_QUOTES, 'UTF-8') ?>" alt=""></span>
       <span class="brand-copy"><span class="brand-th">อันเกิม</span></span>
     </div>
     <div class="language" role="group" aria-label="Language / ภาษา"><button type="button" data-language="th" aria-pressed="true">TH</button><button type="button" data-language="en" aria-pressed="false">EN</button></div>
@@ -49,6 +48,8 @@
       };
       function setLanguage(language) {
         document.documentElement.lang = language;
+        document.querySelector('.brand-th').textContent = language === 'en' ? 'An Goem' : 'อันเกิม';
+        document.querySelector('.brand').setAttribute('aria-label', language === 'en' ? 'An Goem' : 'อันเกิม');
         document.getElementById('message-title').textContent = messages[language][0];
         document.getElementById('message-detail').textContent = messages[language][1];
         document.querySelectorAll('[data-language]').forEach(function (button) { button.setAttribute('aria-pressed', String(button.dataset.language === language)); });

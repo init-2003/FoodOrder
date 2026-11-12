@@ -103,7 +103,7 @@
 .expense-dialog input, .expense-dialog select, .expense-dialog textarea { width: 100%; min-width: 0; min-height: 48px; padding: 11px 14px; border: 1px solid #e0e6dd; border-radius: 12px; outline: none; background: #fafbf9; color: #263a31; font: 400 16px/1.5 Noto, sans-serif; }
 .expense-dialog input, .expense-dialog select { border-radius: 999px; padding-inline: 18px; }
 .expense-dialog select { appearance: none; padding-right: 40px; background-image: linear-gradient(45deg, transparent 50%, #718078 50%), linear-gradient(135deg, #718078 50%, transparent 50%); background-position: right 20px center, right 15px center; background-size: 5px 5px; background-repeat: no-repeat; }
-.expense-dialog input:focus, .expense-dialog select:focus, .expense-dialog textarea:focus { border-color: #fa784e; box-shadow: 0 0 0 3px #fa784e1f; background-color: #fff; }
+.expense-dialog input:focus, .expense-dialog select:focus, .expense-dialog textarea:focus { border-color: #fa633b; outline: none; box-shadow: inset 0 0 0 1px #fa633b; background-color: #fff; }
 .expense-dialog input::placeholder, .expense-dialog textarea::placeholder { color: #a2aca2; }
 .expense-dialog textarea { min-height: 88px; padding: 14px 18px; border-radius: 24px; resize: vertical; }
 .expense-dialog [role="alert"] { margin: 0; color: #b91c1c; }

@@ -23,6 +23,12 @@ function routeBillIdentifier(path) {
   const match = path.match(/\/([0-9]{6,10}|[a-p]{64})\/?$/);
   return match ? match[1] : '';
 }
+function isVerifiedCustomerBill(path, hash, doc) {
+  return Boolean(doc && /^[a-p]{64}$/.test(hash || '') && routeBillIdentifier(path) === hash && !/\/staff\/tables\//.test(path));
+}
+function customerBillPage(page, closed) {
+  return page === 'login' ? (closed ? 'closed' : 'menu') : page;
+}
 const defaultTable = urlParams.get('table') || '';
 const defaultBranch = window.appBranch;
 if (window.location.hash === '#login' && !defaultDoc && !defaultTable) {
@@ -278,11 +284,13 @@ const PosStore = {
 
 document.addEventListener('alpine:init', () => {
   Alpine.data('orderingApp', (initialPage = 'menu', initialClosed = false, initialTable = '', initialDoc = '', initialCancelled = false) => {
+    const customerBill = isVerifiedCustomerBill(location.pathname, window.appBillHash, initialDoc || window.appResolvedDoc);
     let hashRoute = location.hash.slice(1);
     if (hashRoute === 'card') hashRoute = 'cart';
     const isClosed = Boolean(initialClosed || initialPage === 'closed');
     const initialStaff = window.__IMDEE_STAFF__ || null;
     let startPage = document.documentElement.getAttribute('data-initial-route') || initialPage;
+    if (customerBill) startPage = customerBillPage(startPage, isClosed || initialCancelled);
     if (startPage === 'tables' && !initialStaff) {
       startPage = 'login';
     }
@@ -385,6 +393,7 @@ document.addEventListener('alpine:init', () => {
         this.docNo = '';
         this.cart = [];
         this.orders = [];
+        if (customerBill) { window.location.href = new URL('.', document.baseURI).href; return; }
         this.navigate('login');
       },
       async refreshTables() {
@@ -605,8 +614,9 @@ document.addEventListener('alpine:init', () => {
         const qFirst = (window.location.search || '').replace(/^\?/, '').split('&')[0];
         const shortDoc = /^\d+$/.test(qFirst) ? qFirst : '';
         const pathIdentifier = routeBillIdentifier(window.location.pathname);
-        const pathDoc = billHashMap.get(pathIdentifier) || (/^\d+$/.test(pathIdentifier) ? pathIdentifier : '');
+        const pathDoc = billHashMap.get(pathIdentifier) || (customerBill ? (initialDoc || window.appResolvedDoc) : '') || (/^\d+$/.test(pathIdentifier) ? pathIdentifier : '');
         const hasScannedBill = !!(url.get('Fn_Doc_No') || url.get('doc') || url.get('doc_no') || url.get('bill') || url.get('table') || shortDoc || pathDoc);
+        if (customerBill && location.hash === '#login') history.replaceState(history.state, '', `${location.pathname}${location.search}#${this.closed ? 'closed' : 'menu'}`);
         if (url.get('Fn_Doc_No') || url.get('doc') || url.get('doc_no') || url.get('bill') || shortDoc || pathDoc) {
           this.docNo = (/^[a-p]{64}$/.test(pathIdentifier) ? pathDoc : '') || url.get('Fn_Doc_No') || url.get('doc') || url.get('doc_no') || url.get('bill') || pathDoc || shortDoc;
         }
@@ -628,7 +638,7 @@ document.addEventListener('alpine:init', () => {
           }
           this.page = 'tables';
           document.documentElement.setAttribute('data-page', this.page);
-        } else if (!this.staff && hasScannedBill && (preSyncRoute === 'tables' || preSyncRoute === 'login')) {
+        } else if (hasScannedBill && ((!this.staff && preSyncRoute === 'tables') || (customerBill && preSyncRoute === 'login') || (!this.staff && preSyncRoute === 'login'))) {
           this.page = 'menu';
           document.documentElement.setAttribute('data-page', this.page);
         } else if (['login', 'tables', 'menu', 'cart', 'history', 'closed'].includes(preSyncRoute)) {
@@ -653,7 +663,7 @@ document.addEventListener('alpine:init', () => {
           this.page = 'login';
         } else if (this.staff && location.hash === '#tables') {
           this.page = 'tables';
-        } else if (!this.staff && hasScannedBill && (postSyncRoute === 'tables' || postSyncRoute === 'login')) {
+        } else if (hasScannedBill && ((!this.staff && postSyncRoute === 'tables') || (customerBill && postSyncRoute === 'login') || (!this.staff && postSyncRoute === 'login'))) {
           this.page = this.closed ? 'closed' : 'menu';
         } else if (['login', 'tables', 'menu', 'cart', 'history', 'closed'].includes(postSyncRoute)) {
           this.page = (this.closed && !['history', 'login', 'tables'].includes(postSyncRoute)) ? 'closed' : postSyncRoute;
@@ -683,6 +693,7 @@ document.addEventListener('alpine:init', () => {
           const currentDoc = currentPathDoc || currentParams.get('Fn_Doc_No') || currentParams.get('doc') || currentParams.get('doc_no') || currentParams.get('bill') || (/^\d+$/.test(location.search.slice(1).split('&')[0]) ? location.search.slice(1).split('&')[0] : '');
           const currentTable = currentParams.get('table') || '';
           let targetPage = ['login', 'tables', 'menu', 'cart', 'history', 'closed'].includes(next) ? next : (currentDoc || currentTable ? 'menu' : (this.staff ? 'tables' : 'login'));
+          if (customerBill) targetPage = customerBillPage(targetPage, this.closed);
           if (targetPage === 'tables' && !this.staff) {
             targetPage = (currentDoc || currentTable) ? 'menu' : 'login';
           }
@@ -924,7 +935,7 @@ async syncBill() {
       try {
         const billResp = await PosStore.readBill(this.table, this.docNo, this.branch);
         if (billResp.error) {
-          if (this.page === 'tables' || this.page === 'login' || location.hash === '#tables' || location.hash === '#login') {
+          if (this.page === 'tables' || (!customerBill && (this.page === 'login' || location.hash === '#tables' || location.hash === '#login'))) {
             this.docNo = '';
             this.closed = false;
             return;
@@ -968,7 +979,7 @@ async syncBill() {
             if (wasWaitingForTable || tableOnlyClosed) this.navigate('menu');
           } else {
             // Doc_Sts = 1 (ออกใบเสร็จแล้ว) or Doc_Sts = 3 (ยกเลิก) -> ปิดสิทธิ์การสั่งเพิ่มของทุกอุปกรณ์ทันที
-            if (this.page === 'tables' || this.page === 'login' || location.hash === '#tables' || location.hash === '#login') {
+            if (this.page === 'tables' || (!customerBill && (this.page === 'login' || location.hash === '#tables' || location.hash === '#login'))) {
               this.docNo = '';
               this.closed = false;
               return;
@@ -1144,6 +1155,7 @@ async syncBill() {
       setTimeout(() => { this.navSuppressClick = false; }, 500);
     },
     navigate(page) {
+      if (customerBill) page = customerBillPage(page, this.closed);
       if (page === 'tables' && !this.staff) {
         page = (this.docNo || this.table) ? 'menu' : 'login';
       }

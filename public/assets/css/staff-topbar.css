@@ -1,27 +1,8 @@
 /* Shared staff header appearance on the ordering and staff screens. */
-@font-face { font-family: 'SP KinKuSi'; src: url('../fonts/SP_KinKuSi.ttf') format('truetype'); font-weight: 400; font-display: swap; }
 input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"]),
 textarea,
 select { font-size: 16px !important; }
 
-@font-face {
-  font-family: 'Staff Header Noto';
-  src: url('../fonts/noto-sans-thai-400.ttf') format('truetype');
-  font-weight: 400;
-  font-display: block;
-}
-@font-face {
-  font-family: 'Staff Header Noto';
-  src: url('../fonts/noto-sans-thai-600.ttf') format('truetype');
-  font-weight: 600;
-  font-display: block;
-}
-@font-face {
-  font-family: 'Staff Header Noto';
-  src: url('../fonts/noto-sans-thai-700.ttf') format('truetype');
-  font-weight: 700;
-  font-display: block;
-}
 body.has-staff-sidebar :is(.head, .topbar) {
   display: flex;
   align-items: center;

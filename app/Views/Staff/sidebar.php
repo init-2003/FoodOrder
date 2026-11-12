@@ -17,7 +17,7 @@ $staffHeaderRole = htmlspecialchars(trim((string) ($_SESSION['Status'] ?? 'Staff
     <div class="account-menu-divider"></div>
     <div class="account-menu-profile">
       <div class="account-menu-avatar" aria-hidden="true">
-        <img src="assets/images/user.png" alt="">
+        <img src="assets/images/user.png?v=<?= assetVersion('assets/images/user.png') ?>" alt="">
       </div>
       <div class="account-menu-profile-info">
         <div class="account-menu-name"><span class="account-menu-name-text" <?php if ($orderingHeader): ?>x-text="staff?.name || ''"<?php endif; ?>><?= $orderingHeader ? '' : $staffHeaderName ?></span></div>

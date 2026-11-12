@@ -56,8 +56,8 @@ $months = ['มกราคม','กุมภาพันธ์','มีนา�
   <base href="<?= htmlspecialchars($appBase ?? './', ENT_QUOTES, 'UTF-8') ?>">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <?php require __DIR__ . '/../browser-head.php'; ?>
-  <link rel="stylesheet" href="assets/css/staff-images.css?v=<?= filemtime(__DIR__ . '/../../../public/assets/css/staff-images.css') ?>">
-  <link rel="stylesheet" href="assets/css/expenses.css?v=<?= filemtime(__DIR__ . '/../../../public/assets/css/expenses.css') ?>">
+  <link rel="stylesheet" href="assets/css/staff-images.css?v=<?= hash_file('sha256', __DIR__ . '/../../../public/assets/css/staff-images.css') ?>">
+  <link rel="stylesheet" href="assets/css/expenses.css?v=<?= hash_file('sha256', __DIR__ . '/../../../public/assets/css/expenses.css') ?>">
 </head>
 <body class="staff-home expense-page has-staff-sidebar">
 <?php require __DIR__ . '/staff-header.php'; ?>
@@ -120,6 +120,6 @@ $months = ['มกราคม','กุมภาพันธ์','มีนา�
   </div>
   <?php endif ?>
 </main>
-<script src="assets/js/staff-header.js?v=<?= filemtime(__DIR__ . '/../../../public/assets/js/staff-header.js') ?>" defer></script>
-<script src="assets/js/expense-write.js?v=<?= filemtime(__DIR__ . '/../../../public/assets/js/expense-write.js') ?>" defer></script>
+<script src="assets/js/staff-header.js?v=<?= hash_file('sha256', __DIR__ . '/../../../public/assets/js/staff-header.js') ?>" defer></script>
+<script src="assets/js/expense-write.js?v=<?= hash_file('sha256', __DIR__ . '/../../../public/assets/js/expense-write.js') ?>" defer></script>
 </body></html>

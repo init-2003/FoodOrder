@@ -1,5 +1,5 @@
 <?php $orderingHeader = ($headerMode ?? '') === 'alpine'; ?>
-<link rel="stylesheet" href="assets/css/staff-topbar.css?v=<?= filemtime(__DIR__ . '/../../../public/assets/css/staff-topbar.css') ?>">
+<link rel="stylesheet" href="assets/css/staff-topbar.css?v=<?= hash_file('sha256', __DIR__ . '/../../../public/assets/css/staff-topbar.css') ?>">
 <header class="<?= $orderingHeader ? 'topbar' : 'head' ?> staff-shared-header">
   <div class="header-actions"><?php require __DIR__ . '/sidebar.php'; ?></div>
   <div class="topbar-default" <?php if ($orderingHeader): ?>x-show="!searchOpen || (page !== 'menu' && page !== 'tables')" x-transition:enter="search-enter" x-transition:enter-start="search-enter-start" x-transition:enter-end="search-enter-end" x-transition:leave="search-leave" x-transition:leave-start="search-enter-end" x-transition:leave-end="search-enter-start"<?php endif; ?>>
@@ -24,6 +24,6 @@
 </header>
 <?php if (!$orderingHeader): ?>
 <script>window.staffCsrf = <?= json_encode($_SESSION['csrf_token'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;</script>
-<script defer src="public/assets/vendor/sweetalert2.min.js"></script>
-<script defer src="assets/js/account-menu.js?v=<?= filemtime(__DIR__ . '/../../../public/assets/js/account-menu.js') ?>"></script>
+<script defer src="public/assets/vendor/sweetalert2.min.js?v=<?= assetVersion('assets/vendor/sweetalert2.min.js') ?>"></script>
+<script defer src="assets/js/account-menu.js?v=<?= hash_file('sha256', __DIR__ . '/../../../public/assets/js/account-menu.js') ?>"></script>
 <?php endif; ?>

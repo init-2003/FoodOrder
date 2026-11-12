@@ -14,6 +14,7 @@ function resolvePublicRoute(string $requestUri, string $scriptName): array
         $path = substr($path, strlen($base));
     }
     if ($path === '' || $path === '/' || $path === '/index.php') return ['route' => '/'];
+    if ($path === '/staff.php') return ['route' => null, 'redirect' => $base . '/staff/'];
     if ($path === '/staff/food-images' || $path === '/staff/food-images/') return ['route' => null, 'redirect' => $base . '/staff/menus/'];
     if (preg_match('#^/([0-9]{6,10})/?$#D', $path, $m)) return ['route' => '/', 'bill' => $m[1]];
     if (preg_match('#^/staff/tables/([0-9]{6,10})/?$#D', $path, $m)) return ['route' => '/staff/tables/', 'bill' => $m[1]];

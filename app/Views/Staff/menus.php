@@ -12,8 +12,8 @@ $branch = trim((string)(getenv('DEFAULT_BRANCH_ID') ?: ''));
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#ffffff">
   <?php require __DIR__ . '/../browser-head.php'; ?>
-  <link rel="stylesheet" href="assets/css/staff-images.css?v=<?= filemtime(__DIR__ . '/../../../public/assets/css/staff-images.css') ?>">
-  <link rel="stylesheet" href="assets/css/food-images.css?v=<?= filemtime(__DIR__ . '/../../../public/assets/css/food-images.css') ?>">
+  <link rel="stylesheet" href="assets/css/staff-images.css?v=<?= hash_file('sha256', __DIR__ . '/../../../public/assets/css/staff-images.css') ?>">
+  <link rel="stylesheet" href="assets/css/food-images.css?v=<?= hash_file('sha256', __DIR__ . '/../../../public/assets/css/food-images.css') ?>">
 </head>
 <body class="staff-home food-image-page has-staff-sidebar">
   <?php require __DIR__ . '/staff-header.php'; ?>
@@ -36,7 +36,7 @@ $branch = trim((string)(getenv('DEFAULT_BRANCH_ID') ?: ''));
     </section>
   </main>
   <script>window.foodImagesConfig = <?= json_encode(['branch' => $branch, 'csrf' => $_SESSION['csrf_token']], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;</script>
-  <script src="assets/js/food-images.js?v=<?= filemtime(__DIR__ . '/../../../public/assets/js/food-images.js') ?>" defer></script>
-  <script src="assets/js/staff-header.js?v=<?= filemtime(__DIR__ . '/../../../public/assets/js/staff-header.js') ?>" defer></script>
+  <script src="assets/js/food-images.js?v=<?= hash_file('sha256', __DIR__ . '/../../../public/assets/js/food-images.js') ?>" defer></script>
+  <script src="assets/js/staff-header.js?v=<?= hash_file('sha256', __DIR__ . '/../../../public/assets/js/staff-header.js') ?>" defer></script>
 </body>
 </html>

@@ -20,8 +20,8 @@ $base = ($base === '' || $base === '.') ? '/' : $base . '/';
   <meta name="description" content="อันเกิม — เลือกความอร่อยในแบบคุณ สั่งอาหารจากโต๊ะได้ง่าย ๆ">
   <base href="<?= htmlspecialchars($base, ENT_QUOTES, 'UTF-8') ?>">
   <?php require __DIR__ . '/browser-head.php'; ?>
-  <link rel="manifest" href="manifest.php">
-  <link rel="apple-touch-icon" href="assets/images/pwa-180.png?v=2">
+  <link rel="manifest" href="manifest.php?v=<?= hash('sha256', assetVersion('manifest.php') . assetVersion('assets/images/pwa-192.png') . assetVersion('assets/images/pwa-512.png') . assetVersion('assets/images/pwa-maskable-512.png')) ?>">
+  <link rel="apple-touch-icon" href="assets/images/pwa-180.png?v=<?= assetVersion('assets/images/pwa-180.png') ?>">
   <script>
     (function() {
       try {
@@ -140,15 +140,12 @@ $base = ($base === '' || $base === '.') ? '/' : $base . '/';
       display: none !important;
     }
   </style>
-  <link rel="preload" href="assets/fonts/noto-sans-thai-400.ttf" as="font" type="font/ttf" crossorigin>
-  <link rel="preload" href="assets/fonts/noto-sans-thai-500.ttf" as="font" type="font/ttf" crossorigin>
-  <link rel="preload" href="assets/fonts/noto-sans-thai-600.ttf" as="font" type="font/ttf" crossorigin>
-  <link rel="preload" href="assets/fonts/noto-sans-thai-700.ttf" as="font" type="font/ttf" crossorigin>
-  <link rel="preload" href="assets/fonts/sov-patigon.ttf" as="font" type="font/ttf" crossorigin>
-  <link rel="stylesheet" href="assets/css/font-remote.css?v=<?= filemtime(__DIR__ . '/../../public/assets/css/font-remote.css') ?>">
-  <link rel="stylesheet" href="assets/css/tailwind.css">
-  <link rel="stylesheet" href="assets/css/app.css?v=<?= filemtime(__DIR__ . '/../../public/assets/css/app.css') ?>">
-  <link rel="stylesheet" href="assets/css/cart-sync.css?v=<?= filemtime(__DIR__ . '/../../public/assets/css/cart-sync.css') ?>">
+  <link rel="preload" href="assets/fonts/noto-sans-thai-400.ttf?v=<?= assetVersion('assets/fonts/noto-sans-thai-400.ttf') ?>" as="font" type="font/ttf" crossorigin>
+  <link rel="preload" href="assets/fonts/noto-sans-thai-600.ttf?v=<?= assetVersion('assets/fonts/noto-sans-thai-600.ttf') ?>" as="font" type="font/ttf" crossorigin>
+  <link rel="preload" href="assets/fonts/noto-sans-thai-700.ttf?v=<?= assetVersion('assets/fonts/noto-sans-thai-700.ttf') ?>" as="font" type="font/ttf" crossorigin>
+  <link rel="stylesheet" href="assets/css/tailwind.css?v=<?= assetVersion('assets/css/tailwind.css') ?>">
+  <link rel="stylesheet" href="assets/css/app.css?v=<?= hash_file('sha256', __DIR__ . '/../../public/assets/css/app.css') ?>">
+  <link rel="stylesheet" href="assets/css/cart-sync.css?v=<?= hash_file('sha256', __DIR__ . '/../../public/assets/css/cart-sync.css') ?>">
   <script>
     window.__IMDEE_STAFF__ = <?= json_encode($staffEmId !== '' ? [
       'emId' => $staffEmId,
@@ -158,15 +155,16 @@ $base = ($base === '' || $base === '.') ? '/' : $base . '/';
       'canViewExpenses' => !empty($canViewExpenses),
     ] : null, JSON_UNESCAPED_UNICODE) ?>;
   </script>
-  <script defer src="public/assets/vendor/sweetalert2.min.js"></script>
-  <script defer src="assets/js/translations.js?v=<?= filemtime(__DIR__ . '/../../public/assets/js/translations.js') ?>"></script>
-  <script defer src="assets/js/pwa.js?v=<?= filemtime(__DIR__ . '/../../public/assets/js/pwa.js') ?>"></script>
+  <script defer src="public/assets/vendor/sweetalert2.min.js?v=<?= assetVersion('assets/vendor/sweetalert2.min.js') ?>"></script>
+  <script defer src="assets/js/translations.js?v=<?= hash_file('sha256', __DIR__ . '/../../public/assets/js/translations.js') ?>"></script>
+  <script>window.appServiceWorkerVersion = <?= json_encode(hash('sha256', assetVersion('sw.js') . assetVersion('offline.html'))) ?>;</script>
+  <script defer src="assets/js/pwa.js?v=<?= hash_file('sha256', __DIR__ . '/../../public/assets/js/pwa.js') ?>"></script>
   <script>window.appBranch = <?= json_encode($branchId, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;</script>
   <script>window.appResolvedDoc = <?= json_encode((string)($fnDocNo ?? ''), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>; window.appBillHash = <?= json_encode((string)(($billHash ?? '') ?: ($canonicalBillHash ?? '')), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>; window.appCanonicalHash = <?= json_encode((string)($canonicalBillHash ?? ''), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;</script>
   <script>window.csrfToken = <?= json_encode($_SESSION['csrf_token'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;</script>
-  <script defer src="assets/js/app.js?v=<?= filemtime(__DIR__ . '/../../public/assets/js/app.js') ?>"></script>
-  <script defer src="assets/js/account-menu.js?v=<?= filemtime(__DIR__ . '/../../public/assets/js/account-menu.js') ?>"></script>
-  <script defer src="public/assets/vendor/alpine.min.js"></script>
+  <script defer src="assets/js/app.js?v=<?= hash_file('sha256', __DIR__ . '/../../public/assets/js/app.js') ?>"></script>
+  <script defer src="assets/js/account-menu.js?v=<?= hash_file('sha256', __DIR__ . '/../../public/assets/js/account-menu.js') ?>"></script>
+  <script defer src="public/assets/vendor/alpine.min.js?v=<?= assetVersion('assets/vendor/alpine.min.js') ?>"></script>
 </head>
 <body class="<?= (!empty($staffEmId) && ($initialPage ?? '') !== 'login') ? 'has-staff-sidebar' : '' ?>" x-data="orderingApp('<?= htmlspecialchars($initialPage, ENT_QUOTES, 'UTF-8') ?>', <?= !empty($initialClosed) ? 'true' : 'false' ?>, '<?= htmlspecialchars((string)($displayTable ?? ''), ENT_QUOTES, 'UTF-8') ?>', '<?= htmlspecialchars((string)($displayDoc ?? ''), ENT_QUOTES, 'UTF-8') ?>', <?= !empty($initialCancelled) ? 'true' : 'false' ?>)" @keydown.escape.window="closeDetail()" :class="{'dialog-open': detailOpen, 'detail-note-active': detailOpen && noteFocused, 'closed-bill-page': page === 'closed' || page === 'login', 'has-staff-sidebar': staff && page !== 'login'}">
 <svg class="icon-defs" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs>
@@ -214,7 +212,7 @@ $base = ($base === '' || $base === '.') ? '/' : $base . '/';
 </defs></svg>
 
 <aside class="sidebar" :inert="detailOpen" x-show="page !== 'login' && page !== 'tables'">
-  <a class="brand" href="./" @click.prevent="staff ? openTableSelector() : navigate('menu')" :aria-label="t('อันเกิม')"><span class="brand-mark"><img src="assets/images/restaurant-logo.svg" alt=""></span><span><span class="brand-th" x-text="t('อันเกิม')">อันเกิม</span></span></a>
+  <a class="brand" href="./" @click.prevent="staff ? openTableSelector() : navigate('menu')" :aria-label="t('อันเกิม')"><span class="brand-mark"><img src="assets/images/restaurant-logo.svg?v=<?= assetVersion('assets/images/restaurant-logo.svg') ?>" alt=""></span><span><span class="brand-th" x-text="t('อันเกิม')">อันเกิม</span></span></a>
   <div class="sidebar-rule"></div>
   <span class="nav-label"><span x-text="t('มื้ออร่อยของคุณ')">มื้ออร่อยของคุณ</span></span>
   <nav class="space-y-2" :aria-label="t('เมนูหลัก')">
