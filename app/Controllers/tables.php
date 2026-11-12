@@ -30,7 +30,7 @@ if (!$pdo) {
         'mode' => 'offline',
         'error' => [
             'code' => 'DATABASE_UNAVAILABLE',
-            'message' => 'ไม่สามารถเชื่อมต่อฐานข้อมูล SQL Server ได้',
+            'message' => 'ไม่สามารถเชื่อมต่อฐานข้อมูลได้',
         ],
         'tables' => [],
     ], 503);

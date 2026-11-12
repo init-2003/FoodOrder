@@ -21,7 +21,7 @@ if (!is_array($data) || empty($data['items']) || !is_array($data['items'])) {
 
 $pdo = Database::getConnection();
 if (!$pdo) {
-    jsonResponse(['error' => ['code' => 'DATABASE_UNAVAILABLE', 'message' => 'ไม่สามารถเชื่อมต่อฐานข้อมูล SQL Server ได้']], 503);
+    jsonResponse(['error' => ['code' => 'DATABASE_UNAVAILABLE', 'message' => 'ไม่สามารถเชื่อมต่อฐานข้อมูลได้']], 503);
 }
 
 $docInput = trim((string)($data['doc'] ?? $data['docNo'] ?? $data['Fn_Doc_No'] ?? ''));
