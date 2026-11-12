@@ -76,3 +76,41 @@
 .expense-chart-zero { position: absolute; top: -2px; height: 14px; width: 1px; background: #b9a99d; }
 .expense-chart-bar { position: absolute; top: 0; height: 100%; background: #e9683f; border-radius: 6px; }
 .expense-chart-bar.is-negative { background: #7893a4; }
+.expense-add { border: 0; border-radius: 999px; padding: 11px 18px; background: #fa784e; color: #fff; font: inherit; font-weight: 700; cursor: pointer; }
+.expense-add:disabled { opacity: .5; cursor: not-allowed; }
+.expense-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.expense-saved { margin: 16px 0 0; color: #26754c; }
+.expense-dialog { width: min(480px, calc(100% - 32px)); max-height: calc(100dvh - 32px); padding: 28px; border: 1px solid #edf0eb; border-radius: 24px; background: #fff; color: #263a31; font-family: Noto, sans-serif; box-shadow: 0 16px 48px #263a3133; }
+.expense-dialog::backdrop { background: #121c1699; }
+.expense-dialog[open] { animation: expense-dialog-in .25s cubic-bezier(.22, 1, .36, 1) both; }
+.expense-dialog[open]::backdrop { animation: expense-backdrop-in .25s ease-out both; }
+.expense-dialog.is-closing { animation: expense-dialog-out .18s ease-in both; }
+.expense-dialog.is-closing::backdrop { animation: expense-backdrop-out .18s ease-in both; }
+@keyframes expense-dialog-in { from { opacity: 0; transform: translateY(14px) scale(.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@keyframes expense-dialog-out { from { opacity: 1; transform: translateY(0) scale(1); } to { opacity: 0; transform: translateY(10px) scale(.98); } }
+@keyframes expense-backdrop-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes expense-backdrop-out { from { opacity: 1; } to { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .expense-dialog[open], .expense-dialog[open]::backdrop, .expense-dialog.is-closing, .expense-dialog.is-closing::backdrop { animation: none; }
+}
+.expense-dialog form { display: grid; gap: 16px; }
+.expense-dialog-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; padding-bottom: 16px; border-bottom: 1px solid #edf0eb; }
+.expense-dialog-header h2 { margin: 0; color: #263a31; font-size: 21px; line-height: 1.4; }
+.expense-dialog-header button { display: grid; place-items: center; flex: none; width: 36px; height: 36px; padding: 0; border: 0; border-radius: 50%; background: #f4f6f2; color: #637469; cursor: pointer; }
+.expense-dialog-header button svg { width: 17px; height: 17px; }
+.expense-dialog-header button:hover { background: #e9eee8; }
+.expense-dialog label { display: grid; gap: 7px; color: #415449; font-size: 13px; font-weight: 600; }
+.expense-dialog input, .expense-dialog select, .expense-dialog textarea { width: 100%; min-width: 0; min-height: 48px; padding: 11px 14px; border: 1px solid #e0e6dd; border-radius: 12px; outline: none; background: #fafbf9; color: #263a31; font: 400 16px/1.5 Noto, sans-serif; }
+.expense-dialog input, .expense-dialog select { border-radius: 999px; padding-inline: 18px; }
+.expense-dialog select { appearance: none; padding-right: 40px; background-image: linear-gradient(45deg, transparent 50%, #718078 50%), linear-gradient(135deg, #718078 50%, transparent 50%); background-position: right 20px center, right 15px center; background-size: 5px 5px; background-repeat: no-repeat; }
+.expense-dialog input:focus, .expense-dialog select:focus, .expense-dialog textarea:focus { border-color: #fa784e; box-shadow: 0 0 0 3px #fa784e1f; background-color: #fff; }
+.expense-dialog input::placeholder, .expense-dialog textarea::placeholder { color: #a2aca2; }
+.expense-dialog textarea { min-height: 88px; padding: 14px 18px; border-radius: 24px; resize: vertical; }
+.expense-dialog [role="alert"] { margin: 0; color: #b91c1c; }
+.expense-dialog-actions { display: flex; gap: 10px; padding-top: 4px; }
+.expense-dialog-actions button { flex: 1; min-height: 48px; border: 0; border-radius: 999px; padding: 10px 18px; background: #f1f4f0; color: #53675a; font: 600 14px Noto, sans-serif; cursor: pointer; }
+.expense-dialog-actions button[type="submit"] { background: #fa784e; color: #fff; font-weight: 700; }
+.expense-dialog-actions button[type="submit"]:hover:not(:disabled) { background: #e9683f; }
+.expense-dialog button:focus-visible { outline: 2px solid #e9683f; outline-offset: 3px; }
+.expense-dialog-actions button:disabled { opacity: .6; cursor: wait; }
+@media (max-width: 480px) { .expense-dialog { padding: 22px 18px; } }

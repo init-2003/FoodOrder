@@ -26,6 +26,10 @@ it('requires staff to confirm pending orders', function () {
     expect($r['status'])->toBe(401)->and($r['json']['error']['code'])->toBe('UNAUTHORIZED');
 });
 
+it('requires staff authentication to save expenses', function () {
+    expect(runApi('expense.php', 'POST')['status'])->toBe(401);
+});
+
 it('requires staff login to list or open tables', function (string $endpoint) {
     $r = runApi($endpoint, $endpoint === 'open-table.php' ? 'POST' : 'GET');
     expect($r['status'])->toBe(401)->and($r['json']['error']['code'])->toBe('UNAUTHORIZED');
@@ -34,7 +38,7 @@ it('requires staff login to list or open tables', function (string $endpoint) {
 it('rejects missing or incorrect CSRF tokens on state changing endpoints', function (string $endpoint, string $csrf) {
     $r = runApi($endpoint, 'POST', csrf: $csrf);
     expect($r['status'])->toBe(403)->and($r['json']['error']['code'])->toBe('INVALID_CSRF');
-})->with(['auth.php', 'open-table.php', 'cart.php', 'order.php', 'confirm-order.php', 'food-image.php'])->with(['missing', 'invalid']);
+})->with(['auth.php', 'open-table.php', 'cart.php', 'order.php', 'confirm-order.php', 'food-image.php', 'expense.php'])->with(['missing', 'invalid']);
 
 it('does not allow opening tables with GET', function () {
     $r = runApi('open-table.php');

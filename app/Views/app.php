@@ -21,7 +21,7 @@ $base = ($base === '' || $base === '.') ? '/' : $base . '/';
   <base href="<?= htmlspecialchars($base, ENT_QUOTES, 'UTF-8') ?>">
   <?php require __DIR__ . '/browser-head.php'; ?>
   <link rel="manifest" href="manifest.php">
-  <link rel="apple-touch-icon" href="assets/images/pwa-180.png">
+  <link rel="apple-touch-icon" href="assets/images/pwa-180.png?v=2">
   <script>
     (function() {
       try {

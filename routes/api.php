@@ -5,6 +5,7 @@ return [
     '/api/bill.php' => ['controller' => 'bill'],
     '/api/cart.php' => ['controller' => 'cart'],
     '/api/confirm-order.php' => ['controller' => 'confirm-order'],
+    '/api/expense.php' => ['controller' => 'expense'],
     '/api/food-image.php' => ['controller' => 'food-image'],
     '/api/menu.php' => ['controller' => 'menu'],
     '/api/open-table.php' => ['controller' => 'open-table'],
