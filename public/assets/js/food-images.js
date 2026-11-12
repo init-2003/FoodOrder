@@ -98,12 +98,32 @@
           if (!response.ok || !result.success) throw new Error(result.error?.message || t('ลบรูปไม่สำเร็จ'));
           item.image = result.image; item.hasImage = false; card.querySelector('img').src = result.image; image.tabIndex = -1;
           button.textContent = t('เพิ่มรูป'); removeButton.hidden = true;
+          Swal.fire({
+            icon: 'success',
+            title: english ? 'Photo removed' : 'ลบรูปเรียบร้อยแล้ว',
+            text: item.name,
+            showConfirmButton: false,
+            timer: 1600,
+          });
         } catch (error) { alert(error.message || t('ลบรูปไม่สำเร็จ')); }
         finally { button.disabled = false; removeButton.disabled = false; }
       });
       input.addEventListener('change', async () => {
         const file = input.files?.[0]; if (!file) return;
         if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || file.size > 5 * 1024 * 1024) { alert(t('กรุณาเลือกรูป JPG, PNG หรือ WebP ขนาดไม่เกิน 5 MB')); input.value = ''; return; }
+        const english = document.documentElement.lang === 'en';
+        const confirmation = await Swal.fire({
+          title: english ? 'Confirm photo?' : 'ยืนยันรูปอาหาร?',
+          text: matching[index].name,
+          icon: 'question',
+          showCancelButton: true,
+          confirmButtonText: english ? 'Confirm' : 'ยืนยัน',
+          cancelButtonText: english ? 'Cancel' : 'ยกเลิก',
+          confirmButtonColor: '#ef7147',
+          cancelButtonColor: '#8c938f',
+          reverseButtons: true,
+        });
+        if (!confirmation.isConfirmed) { input.value = ''; return; }
         const objectUrl = URL.createObjectURL(file), img = card.querySelector('img'), previous = img.src;
         img.src = objectUrl;
         const data = new FormData(); data.set('id', matching[index].id); data.set('branch', branch); data.set('image', file);
@@ -112,7 +132,16 @@
           const response = await fetch('api/food-image.php', { method:'POST', headers:{ 'X-CSRF-Token':csrf, 'Accept':'application/json' }, body:data });
           const result = await response.json();
           if (!response.ok || !result.success) throw new Error(result.error?.message || 'บันทึกรูปไม่สำเร็จ');
+          const wasChanged = matching[index].hasImage;
           matching[index].image = result.image; matching[index].hasImage = true; img.src = result.image; image.tabIndex = 0; button.textContent = t('เปลี่ยนรูป'); removeButton.hidden = false;
+          const english = document.documentElement.lang === 'en';
+          Swal.fire({
+            icon: 'success',
+            title: english ? (wasChanged ? 'Photo updated' : 'Photo added') : (wasChanged ? 'เปลี่ยนรูปสำเร็จ' : 'เพิ่มรูปสำเร็จ'),
+            text: matching[index].name,
+            showConfirmButton: false,
+            timer: 1600,
+          });
         } catch (error) { img.src = previous; alert(error.message || t('บันทึกรูปไม่สำเร็จ')); button.textContent = t(matching[index].hasImage ? 'เปลี่ยนรูป' : 'เพิ่มรูป'); }
         finally { URL.revokeObjectURL(objectUrl); input.value = ''; button.disabled = false; removeButton.disabled = false; }
       });
