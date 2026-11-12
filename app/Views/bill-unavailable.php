@@ -19,7 +19,7 @@
     .brand-mark { display: grid; place-items: center; width: 40px; height: 40px; }
     .brand-mark img { width: 100%; height: 100%; object-fit: contain; }
     .brand-copy { display: flex; flex-direction: column; line-height: 1; }
-    .brand-th { font: 32px/1 'SOV Patigon', 'Noto Sans Thai', sans-serif; }
+    .brand-th { font: 32px/1 'SP KinKuSi', 'Noto Sans Thai', sans-serif; }
     .brand-en { color: #879488; font-size: 9px; letter-spacing: 1px; }
     .language { display: flex; padding: 3px; border: 1px solid #d9e0da; border-radius: 22px; background: #e9eeea; }
     .language button { width: 30px; height: 30px; padding: 0; border: 0; border-radius: 50%; background: transparent; color: #5e7166; font: 600 11px 'Noto Sans Thai', sans-serif; cursor: pointer; }
@@ -31,7 +31,7 @@
   <header>
     <div class="brand" aria-label="อันเกิม">
       <span class="brand-mark"><img src="<?= htmlspecialchars(($publicBase ?? '/') . 'assets/images/restaurant-logo.svg', ENT_QUOTES, 'UTF-8') ?>" alt=""></span>
-      <span class="brand-copy"><span class="brand-th">อันเกิม</span><span class="brand-en" lang="vi">Ăn cơm</span></span>
+      <span class="brand-copy"><span class="brand-th">อันเกิม</span></span>
     </div>
     <div class="language" role="group" aria-label="Language / ภาษา"><button type="button" data-language="th" aria-pressed="true">TH</button><button type="button" data-language="en" aria-pressed="false">EN</button></div>
   </header>

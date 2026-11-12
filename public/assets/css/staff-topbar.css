@@ -1,4 +1,5 @@
 /* Shared staff header appearance on the ordering and staff screens. */
+@font-face { font-family: 'SP KinKuSi'; src: url('../fonts/SP_KinKuSi.ttf') format('truetype'); font-weight: 400; font-display: swap; }
 input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"]),
 textarea,
 select { font-size: 16px !important; }
@@ -97,7 +98,7 @@ body.has-staff-sidebar :is(.head, .topbar) .brand-mark svg {
 
 body.has-staff-sidebar :is(.head, .topbar) .brand-th {
   display: block;
-  font-family: 'SOV Patigon', Noto, sans-serif;
+  font-family: 'SP KinKuSi', Noto, sans-serif;
   font-size: 34px;
   font-weight: 400;
   line-height: .9;

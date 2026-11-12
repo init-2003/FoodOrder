@@ -1,4 +1,11 @@
 @font-face {
+  font-family: 'SP KinKuSi';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(../fonts/SP_KinKuSi.ttf) format('truetype');
+}
+@font-face {
   font-family: 'Noto Sans Thai';
   font-style: normal;
   font-weight: 400;
