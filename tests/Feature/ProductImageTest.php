@@ -7,6 +7,7 @@ it('maps stored upload paths to the image endpoint', function () {
     expect(productImageUrl('assets/uploads/products/eba26ab80a52ce4ee668d3be8e1d3a66.jpg'))
         ->toBe('api/product-image.php?file=eba26ab80a52ce4ee668d3be8e1d3a66.jpg');
     expect(productImageUrl('https://example.com/food.jpg'))->toBe('https://example.com/food.jpg');
+    expect(productImageUrl('assets/images/noodles.jpg'))->toBe('assets/images/food-placeholder.svg');
     expect(productImageUrl('assets/uploads/products/../../secret.jpg'))->toBe('assets/uploads/products/../../secret.jpg');
 });
 

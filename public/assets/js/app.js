@@ -888,7 +888,7 @@ document.addEventListener('alpine:init', () => {
           }
           if (!existing) {
             const product = this.items.find(item => String(item.id).trim() === String(line.id).trim());
-            this.cart.push({ ...(product || { available: true, image: 'assets/images/pad-thai.jpg' }), ...line });
+            this.cart.push({ ...(product || { available: true, image: 'assets/images/food-placeholder.svg' }), ...line });
           }
           const snapshot = JSON.stringify(this.cart);
           const cKey = this.cartStorageKey();

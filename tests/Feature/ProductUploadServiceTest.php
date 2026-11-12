@@ -25,3 +25,31 @@ it('stores an uploaded product image and commits its database reference', functi
         rmdir($dir);
     }
 });
+
+it('removes only the selected product image reference', function () {
+    $path = 'assets/uploads/products/' . str_repeat('a', 32) . '.jpg';
+    $encoded = bin2hex(mb_convert_encoding($path, 'UTF-16LE', 'UTF-8'));
+    $select = $this->createMock(PDOStatement::class);
+    $select->expects($this->once())->method('execute')->with(['002']);
+    $select->method('fetchAll')->willReturn([['image' => $encoded]]);
+    $update = $this->createMock(PDOStatement::class);
+    $update->expects($this->once())->method('execute')->with(['002']);
+    $update->method('rowCount')->willReturn(1);
+    $pdo = $this->createMock(PDO::class);
+    $pdo->method('prepare')->willReturnOnConsecutiveCalls($select, $update);
+    $pdo->expects($this->once())->method('commit');
+    $result = removeProductImage($pdo, 'ITEM1', '002', productImageUrl($path));
+    expect($result['status'])->toBe(200)->and($result['body']['image'])->toBe('assets/images/food-placeholder.svg');
+});
+
+it('does not remove an image that another user has changed', function () {
+    $path = 'assets/uploads/products/' . str_repeat('b', 32) . '.jpg';
+    $select = $this->createMock(PDOStatement::class);
+    $select->method('fetchAll')->willReturn([['image' => bin2hex(mb_convert_encoding($path, 'UTF-16LE', 'UTF-8'))]]);
+    $pdo = $this->createMock(PDO::class);
+    $pdo->expects($this->once())->method('prepare')->willReturn($select);
+    $pdo->expects($this->once())->method('rollBack');
+    $pdo->expects($this->never())->method('commit');
+    $result = removeProductImage($pdo, 'ITEM1', '002', 'api/product-image.php?file=' . str_repeat('a', 32) . '.jpg');
+    expect($result['status'])->toBe(409);
+});

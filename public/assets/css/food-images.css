@@ -32,7 +32,12 @@
 .food-image-page .item-info small { margin-top: 4px; color: #879488; font-size: 12px; line-height: 1.4; }
 .food-image-page .upload { min-height: 34px; margin-top: auto; padding: 7px 16px; background: #ff754e; border-radius: 999px; font-size: 13px; font-weight: 700; line-height: 1.3; }
 .food-image-page .upload:hover:not(:disabled) { background: #ed6942; }
-.food-image-page .upload:focus-visible, .food-image-page select:focus-visible { outline: 2px solid #e65d37; outline-offset: 3px; }
+.food-image-page .image-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: auto; }
+.food-image-page .image-actions .upload { margin-top: 0; }
+.food-image-page .remove-image { min-height: 34px; padding: 7px 14px; border: 1px solid #f3c8bd; border-radius: 999px; background: #fff; color: #c74b32; font-family: inherit; font-size: 13px; font-weight: 700; line-height: 1.3; cursor: pointer; }
+.food-image-page .remove-image:hover:not(:disabled) { background: #fff0e9; }
+.food-image-page .remove-image[hidden] { display: none; }
+.food-image-page .upload:focus-visible, .food-image-page .remove-image:focus-visible, .food-image-page select:focus-visible { outline: 2px solid #e65d37; outline-offset: 3px; }
 @media (min-width: 761px) and (orientation: landscape), (min-width: 1025px), (min-width: 1101px) {
   .food-image-page .food-image-shell {
     max-width: none !important;

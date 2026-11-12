@@ -10,6 +10,14 @@ $branch = trim((string)($_POST['branch'] ?? ''));
 $id = trim((string)($_POST['id'] ?? ''));
 $configuredBranch = trim((string)(getenv('DEFAULT_BRANCH_ID') ?: ''));
 if ($branch === '' || $configuredBranch === '' || $branch !== $configuredBranch || $id === '' || mb_strlen($id, 'UTF-8') > 35) jsonResponse(['error' => ['message' => 'ข้อมูลสินค้าไม่ถูกต้อง']], 400);
+if (($_POST['action'] ?? '') === 'delete') {
+    $expected = trim((string)($_POST['expected_image'] ?? ''));
+    if ($expected === '' || strlen($expected) > 2048) jsonResponse(['error' => ['message' => 'ข้อมูลรูปภาพไม่ถูกต้อง']], 400);
+    $pdo = Database::getConnection();
+    if (!$pdo) jsonResponse(['error' => ['message' => 'ไม่สามารถเชื่อมต่อฐานข้อมูลได้']], 503);
+    $result = removeProductImage($pdo, $id, $branch, $expected);
+    jsonResponse($result['body'], $result['status']);
+}
 $file = $_FILES['image'] ?? null;
 if (!is_array($file) || ($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK || ($file['size'] ?? 0) <= 0 || $file['size'] > 5 * 1024 * 1024 || !is_uploaded_file($file['tmp_name'])) jsonResponse(['error' => ['message' => 'กรุณาเลือกรูปภาพขนาดไม่เกิน 5 MB']], 400);
 if (!function_exists('imagecreatefromstring') || !function_exists('imagejpeg')) jsonResponse(['error' => ['message' => 'เซิร์ฟเวอร์ยังไม่รองรับการประมวลผลรูปภาพ กรุณาติดต่อผู้ดูแลระบบ']], 503);

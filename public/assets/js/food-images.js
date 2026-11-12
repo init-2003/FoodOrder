@@ -12,7 +12,7 @@
     items.innerHTML = matching.map(item => {
       const categoryName = categories.find(cat => cat.id === item.category)?.name;
       const unit = String(item.unit ?? '').trim();
-      return `<article class="item"><div class="item-image"><img src="${escape(item.image)}" alt="" loading="lazy"></div><div class="item-info"><strong>${escape(item.name)}</strong><span class="item-code">${english ? 'Code' : 'รหัส'}: ${escape(item.id)}</span>${categoryName ? `<span class="item-category">${escape(categoryName)}</span>` : ''}<span class="item-price">฿${Number(item.price).toLocaleString('th-TH', { maximumFractionDigits: 2 })}${unit ? ` <span>/ ${escape(unit)}</span>` : ''}</span><button type="button" class="upload">${t(item.hasImage ? 'เปลี่ยนรูป' : 'เพิ่มรูป')}</button><input type="file" accept="image/jpeg,image/png,image/webp"></div></article>`;
+      return `<article class="item"><div class="item-image"><img src="${escape(item.image)}" alt="" loading="lazy"></div><div class="item-info"><strong>${escape(item.name)}</strong><span class="item-code">${english ? 'Code' : 'รหัส'}: ${escape(item.id)}</span>${categoryName ? `<span class="item-category">${escape(categoryName)}</span>` : ''}<span class="item-price">฿${Number(item.price).toLocaleString('th-TH', { maximumFractionDigits: 2 })}${unit ? ` <span>/ ${escape(unit)}</span>` : ''}</span><div class="image-actions"><button type="button" class="upload">${t(item.hasImage ? 'เปลี่ยนรูป' : 'เพิ่มรูป')}</button><button type="button" class="remove-image" ${item.hasImage ? '' : 'hidden'}>${t('ลบรูป')}</button></div><input type="file" accept="image/jpeg,image/png,image/webp"></div></article>`;
     }).join('');
     status.textContent = matching.length ? `${matching.length} ${document.documentElement.lang === 'en' ? 'items' : 'รายการ'}` : t('ไม่พบรายการอาหาร');
     [...items.children].forEach((card, index) => {
@@ -20,8 +20,23 @@
         card.style.setProperty('--entrance-delay', `${index * 55}ms`);
         card.classList.add('item-enter');
       }
-      const button = card.querySelector('button'), input = card.querySelector('input');
+      const button = card.querySelector('.upload'), removeButton = card.querySelector('.remove-image'), input = card.querySelector('input');
       button.addEventListener('click', () => input.click());
+      removeButton.addEventListener('click', async () => {
+        const item = matching[index];
+        const message = document.documentElement.lang === 'en' ? `Remove the photo for ${item.name}?` : `ลบรูปอาหาร ${item.name} ใช่หรือไม่?`;
+        if (!confirm(message)) return;
+        const data = new FormData(); data.set('action', 'delete'); data.set('id', item.id); data.set('branch', branch); data.set('expected_image', item.image);
+        button.disabled = true; removeButton.disabled = true;
+        try {
+          const response = await fetch('api/food-image.php', { method: 'POST', headers: { 'X-CSRF-Token': csrf, 'Accept': 'application/json' }, body: data });
+          const result = await response.json();
+          if (!response.ok || !result.success) throw new Error(result.error?.message || t('ลบรูปไม่สำเร็จ'));
+          item.image = result.image; item.hasImage = false; card.querySelector('img').src = result.image;
+          button.textContent = t('เพิ่มรูป'); removeButton.hidden = true;
+        } catch (error) { alert(error.message || t('ลบรูปไม่สำเร็จ')); }
+        finally { button.disabled = false; removeButton.disabled = false; }
+      });
       input.addEventListener('change', async () => {
         const file = input.files?.[0]; if (!file) return;
         if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || file.size > 5 * 1024 * 1024) { alert(t('กรุณาเลือกรูป JPG, PNG หรือ WebP ขนาดไม่เกิน 5 MB')); input.value = ''; return; }
@@ -31,14 +46,14 @@
         const accepted = await new Promise(resolve => requestAnimationFrame(() => setTimeout(() => resolve(confirm(message)), 0)));
         if (!accepted) { img.src = previous; URL.revokeObjectURL(objectUrl); input.value = ''; return; }
         const data = new FormData(); data.set('id', matching[index].id); data.set('branch', branch); data.set('image', file);
-        button.disabled = true; button.textContent = t('กำลังบันทึก...');
+        button.disabled = true; removeButton.disabled = true; button.textContent = t('กำลังบันทึก...');
         try {
           const response = await fetch('api/food-image.php', { method:'POST', headers:{ 'X-CSRF-Token':csrf, 'Accept':'application/json' }, body:data });
           const result = await response.json();
           if (!response.ok || !result.success) throw new Error(result.error?.message || 'บันทึกรูปไม่สำเร็จ');
-          matching[index].image = result.image; matching[index].hasImage = true; img.src = result.image; button.textContent = t('เปลี่ยนรูป');
+          matching[index].image = result.image; matching[index].hasImage = true; img.src = result.image; button.textContent = t('เปลี่ยนรูป'); removeButton.hidden = false;
         } catch (error) { img.src = previous; alert(error.message || t('บันทึกรูปไม่สำเร็จ')); button.textContent = t(matching[index].hasImage ? 'เปลี่ยนรูป' : 'เพิ่มรูป'); }
-        finally { URL.revokeObjectURL(objectUrl); input.value = ''; button.disabled = false; }
+        finally { URL.revokeObjectURL(objectUrl); input.value = ''; button.disabled = false; removeButton.disabled = false; }
       });
     });
   }

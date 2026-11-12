@@ -5,15 +5,6 @@ require_once __DIR__ . '/product_image.php';
 
 function loadMenu(PDO $pdo, string $branchId): array
 {
-    $getItemImage = static function (string $name, string $cat): string {
-        if (str_contains($name, 'กาแฟ') || str_contains($name, 'ชา') || str_contains($name, 'น้ำ') || str_contains($name, 'โซดา') || str_contains($name, 'เบียร์') || str_contains($name, 'Americano') || str_contains($name, 'Latte') || str_contains($name, 'Tea') || str_contains($name, 'Cocoa') || str_contains($name, 'Soda') || str_contains($name, 'Berry')) return 'assets/images/drink.jpg';
-        if (str_contains($name, 'ไอศกรีม') || str_contains($name, 'หวาน') || str_contains($name, 'สาคู') || str_contains($name, 'เฉาก๊วย') || str_contains($name, 'ถั่วดำ')) return 'assets/images/icecream.jpg';
-        if (str_contains($name, 'สลัด') || str_contains($name, 'ยำ')) return 'assets/images/salad.jpg';
-        if (str_contains($name, 'ก๋วย') || str_contains($name, 'เฝ่อ') || str_contains($name, 'ต้ม')) return 'assets/images/noodles.jpg';
-        if (str_contains($name, 'แกง') || str_contains($name, 'คลุก') || str_contains($name, 'ผัด')) return 'assets/images/curry.jpg';
-        return 'assets/images/pad-thai.jpg';
-    };
-
     // 1. Menu items directly from Trade table
     $stmt = $pdo->prepare("SELECT Trade_ID, 
                                   CONVERT(varbinary(max), Trade_Name) as Trade_Name, 
@@ -110,7 +101,7 @@ function loadMenu(PDO $pdo, string $branchId): array
         $itemRank = $rank[trim((string)$r['Trade_ID'])] ?? null;
         $isRec = $itemRank !== null;
         $price = (float)$r['Sale_Price'];
-        $img = $linkImg !== '' ? productImageUrl($linkImg) : $getItemImage($tName, $cName);
+        $img = $linkImg !== '' ? productImageUrl($linkImg) : 'assets/images/food-placeholder.svg';
 
         $items[] = [
             'id' => $r['Trade_ID'],

@@ -7,7 +7,7 @@
     'เพิ่มและเปลี่ยนรูปอาหาร': 'Add or change food photos', '← หน้าหลัก': '← Home', 'จัดการเมนู': 'Menu management',
     'รายการอาหาร': 'Food items', 'เพิ่มหรือเปลี่ยนรูปอาหารที่แสดงในเมนู': 'Add or change menu photos',
     'ค้นหาชื่อหรือรหัสอาหาร': 'Search name or item code', 'ทุกหมวดหมู่': 'All categories', 'กำลังโหลดรายการอาหาร...': 'Loading food items...',
-    'เพิ่มรูป': 'Add photo', 'เปลี่ยนรูป': 'Change photo', 'กำลังบันทึก...': 'Saving...', 'ไม่พบรายการอาหาร': 'No food items found',
+    'เพิ่มรูป': 'Add photo', 'เปลี่ยนรูป': 'Change photo', 'ลบรูป': 'Remove photo', 'ลบรูปไม่สำเร็จ': 'Unable to remove photo', 'กำลังบันทึก...': 'Saving...', 'ไม่พบรายการอาหาร': 'No food items found',
     'ไม่สามารถโหลดรายการอาหารได้': 'Unable to load food items', 'บันทึกรูปไม่สำเร็จ': 'Unable to save photo',
     'กรุณาเลือกรูป JPG, PNG หรือ WebP ขนาดไม่เกิน 5 MB': 'Choose a JPG, PNG or WebP image up to 5 MB',
     'จัดการโต๊ะ': 'Table management', 'สถานะโต๊ะอาหาร': 'Table status',

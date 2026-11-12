@@ -33,5 +33,36 @@ try {
     appLog('error', 'Product image update failed', ['error' => $e->getMessage()]);
     return writeServiceResult(['error' => ['message' => 'ไม่สามารถบันทึกรูปได้ กรุณาลองอีกครั้ง']], 500);
 }
+}
 
+/** Remove the selected product's image reference without deleting files shared by other products. */
+function removeProductImage(PDO $pdo, string $id, string $branch, string $expectedImage): array
+{
+    try {
+        $pdo->beginTransaction();
+        $hex = Database::hexThai($id);
+        $query = $pdo->prepare("SELECT CONVERT(varbinary(max), Link_Part_image) AS image FROM Trade WITH (UPDLOCK, HOLDLOCK) WHERE Branch_ID = ? AND Trade_ID = CONVERT(nvarchar(35), $hex)");
+        $query->execute([$branch]);
+        $rows = $query->fetchAll(PDO::FETCH_ASSOC);
+        $query->closeCursor();
+        if (count($rows) !== 1) {
+            $pdo->rollBack();
+            return writeServiceResult(['error' => ['message' => 'ไม่พบเมนูที่เลือก']], 404);
+        }
+        $current = trim(Database::decodeThai($rows[0]['image'] ?? null));
+        if ($current === '' || !hash_equals(productImageUrl($current), $expectedImage)) {
+            $pdo->rollBack();
+            return writeServiceResult(['error' => ['message' => 'รูปอาหารมีการเปลี่ยนแปลง กรุณารีเฟรชหน้าแล้วลองอีกครั้ง']], 409);
+        }
+        $update = $pdo->prepare("UPDATE Trade SET Link_Part_image = '' WHERE Branch_ID = ? AND Trade_ID = CONVERT(nvarchar(35), $hex)");
+        $update->execute([$branch]);
+        if ($update->rowCount() !== 1) throw new RuntimeException('Product image was not updated');
+        $update->closeCursor();
+        $pdo->commit();
+        return writeServiceResult(['success' => true, 'image' => 'assets/images/food-placeholder.svg']);
+    } catch (Throwable $e) {
+        if ($pdo->inTransaction()) $pdo->rollBack();
+        appLog('error', 'Product image removal failed', ['error' => $e->getMessage()]);
+        return writeServiceResult(['error' => ['message' => 'ไม่สามารถลบรูปได้ กรุณาลองอีกครั้ง']], 500);
+    }
 }

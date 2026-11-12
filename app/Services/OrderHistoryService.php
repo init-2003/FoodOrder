@@ -4,15 +4,6 @@ require_once __DIR__ . '/../Database/db.php';
 
 function loadOrderHistory(PDO $pdo, string $fnDocNo, string $branchId, string $tableInput): array
 {
-    $getHistoryImage = static function (string $name): string {
-        if (str_contains($name, 'กาแฟ') || str_contains($name, 'ชา') || str_contains($name, 'น้ำ') || str_contains($name, 'โซดา') || str_contains($name, 'เบียร์') || str_contains($name, 'Americano') || str_contains($name, 'Latte') || str_contains($name, 'Tea') || str_contains($name, 'Cocoa')) return 'assets/images/drink.jpg';
-        if (str_contains($name, 'ไอศกรีม') || str_contains($name, 'หวาน') || str_contains($name, 'สาคู') || str_contains($name, 'เฉาก๊วย') || str_contains($name, 'ถั่วดำ')) return 'assets/images/icecream.jpg';
-        if (str_contains($name, 'สลัด') || str_contains($name, 'ยำ')) return 'assets/images/salad.jpg';
-        if (str_contains($name, 'ก๋วย') || str_contains($name, 'เฝ่อ') || str_contains($name, 'ต้ม')) return 'assets/images/noodles.jpg';
-        if (str_contains($name, 'แกง') || str_contains($name, 'คลุก') || str_contains($name, 'ผัด')) return 'assets/images/curry.jpg';
-        return 'assets/images/pad-thai.jpg';
-    };
-
     $formatQueStatus = static function (?string $sts): string {
         return match (trim((string)$sts)) {
             'S', '' => 'ส่งเข้าครัวแล้ว',
@@ -105,7 +96,7 @@ function loadOrderHistory(PDO $pdo, string $fnDocNo, string $branchId, string $t
             'orderedAt' => $cRow['Fn_Doc_Date_Time'] ?? null,
             'foodQueSts' => $sts,
             'statusDesc' => $formatQueStatus($sts),
-            'image' => $getHistoryImage($tName),
+            'image' => 'assets/images/food-placeholder.svg',
             'lineTotal' => $lineTotal,
         ];
 

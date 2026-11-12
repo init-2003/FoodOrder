@@ -30,6 +30,10 @@ it('requires staff authentication to save expenses', function () {
     expect(runApi('expense.php', 'POST')['status'])->toBe(401);
 });
 
+it('requires staff authentication to remove a product image', function () {
+    expect(runApi('food-image.php', 'POST', post: ['action' => 'delete', 'id' => 'ITEM1', 'branch' => 'test'])['status'])->toBe(401);
+});
+
 it('requires staff login to list or open tables', function (string $endpoint) {
     $r = runApi($endpoint, $endpoint === 'open-table.php' ? 'POST' : 'GET');
     expect($r['status'])->toBe(401)->and($r['json']['error']['code'])->toBe('UNAUTHORIZED');
