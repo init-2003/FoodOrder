@@ -19,6 +19,30 @@ $base = ($base === '' || $base === '.') ? '/' : $base . '/';
   <meta name="apple-mobile-web-app-title" content="อันเกิม">
   <meta name="description" content="อันเกิม — เลือกความอร่อยในแบบคุณ สั่งอาหารจากโต๊ะได้ง่าย ๆ">
   <base href="<?= htmlspecialchars($base, ENT_QUOTES, 'UTF-8') ?>">
+  <script>
+    (function () {
+      var base = <?= json_encode($base, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
+      var billHash = <?= json_encode((string)($billHash ?? ''), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
+      var key = 'customer-bill:' + base;
+      var closed = <?= !empty($initialClosed) ? 'true' : 'false' ?>;
+      var staff = <?= !empty($staffEmId) ? 'true' : 'false' ?>;
+      var path = window.location.pathname;
+      var customerPath = base + billHash;
+      window.clearRememberedCustomerBill = function () {
+        try { if (sessionStorage.getItem(key) === billHash) sessionStorage.removeItem(key); } catch (e) {}
+      };
+      try {
+        if (/^[a-p]{64}$/.test(billHash) && (path === customerPath || path === customerPath + '/')) {
+          if (closed) window.clearRememberedCustomerBill();
+          else sessionStorage.setItem(key, billHash);
+        } else if (!staff && (path === base || path === base.replace(/\/$/, '')) && !window.location.search) {
+          var saved = sessionStorage.getItem(key);
+          if (/^[a-p]{64}$/.test(saved || '')) window.location.replace(base + saved);
+          else if (saved) sessionStorage.removeItem(key);
+        }
+      } catch (e) {}
+    })();
+  </script>
   <?php require __DIR__ . '/browser-head.php'; ?>
   <link rel="manifest" href="manifest.php?v=<?= hash('sha256', assetVersion('manifest.php') . assetVersion('assets/images/pwa-192.png') . assetVersion('assets/images/pwa-512.png') . assetVersion('assets/images/pwa-maskable-512.png')) ?>">
   <link rel="apple-touch-icon" href="assets/images/pwa-180.png?v=<?= assetVersion('assets/images/pwa-180.png') ?>">

@@ -979,6 +979,7 @@ async syncBill() {
             if (wasWaitingForTable || tableOnlyClosed) this.navigate('menu');
           } else {
             // Doc_Sts = 1 (ออกใบเสร็จแล้ว) or Doc_Sts = 3 (ยกเลิก) -> ปิดสิทธิ์การสั่งเพิ่มของทุกอุปกรณ์ทันที
+            if (typeof window.clearRememberedCustomerBill === 'function') window.clearRememberedCustomerBill();
             if (this.page === 'tables' || (!customerBill && (this.page === 'login' || location.hash === '#tables' || location.hash === '#login'))) {
               this.docNo = '';
               this.closed = false;

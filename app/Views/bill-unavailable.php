@@ -4,6 +4,14 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <?php if (empty($hashLookupUnavailable) && !empty($billHash)): ?>
+  <script>
+    try {
+      var billKey = 'customer-bill:' + <?= json_encode($publicBase ?? '/', JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
+      if (sessionStorage.getItem(billKey) === <?= json_encode((string)$billHash, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>) sessionStorage.removeItem(billKey);
+    } catch (e) {}
+  </script>
+  <?php endif; ?>
   <?php require __DIR__ . '/browser-head.php'; ?>
   <style>
     * { box-sizing: border-box; }
