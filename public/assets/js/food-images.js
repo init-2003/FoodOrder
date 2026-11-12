@@ -99,11 +99,11 @@
           item.image = result.image; item.hasImage = false; card.querySelector('img').src = result.image; image.tabIndex = -1;
           button.textContent = t('เพิ่มรูป'); removeButton.hidden = true;
           Swal.fire({
-            icon: 'success',
+            icon: result.shared ? 'info' : 'success',
             title: english ? 'Photo removed' : 'ลบรูปเรียบร้อยแล้ว',
-            text: item.name,
-            showConfirmButton: false,
-            timer: 1600,
+            text: result.shared ? (english ? 'The file is still used by another menu item.' : 'ไฟล์ยังถูกใช้งานโดยเมนูอื่น') : item.name,
+            showConfirmButton: !!result.shared,
+            ...(result.shared ? { confirmButtonText: english ? 'OK' : 'ตกลง', confirmButtonColor: '#ef7147' } : { timer: 1600 }),
           });
         } catch (error) { alert(error.message || t('ลบรูปไม่สำเร็จ')); }
         finally { button.disabled = false; removeButton.disabled = false; }
