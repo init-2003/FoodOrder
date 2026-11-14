@@ -6571,7 +6571,8 @@ body.account-drawer-open .topbar {
     padding: 12px 24px;
     background: #fff;
     border-top: 1px solid #edf0eb;
-    box-shadow: none;
+    border-radius: 20px 20px 0 0;
+    box-shadow: 0 -3px 12px rgba(38, 54, 46, .04);
   }
   .cart-page-active .cart-loaded > .cart-checkout::after {
     content: '';
