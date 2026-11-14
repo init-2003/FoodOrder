@@ -755,6 +755,13 @@ document.addEventListener('alpine:init', () => {
             // Ignore iOS rubber-band overscroll when detecting scroll direction.
             const maxScrollY = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
             const currentScrollY = Math.max(0, Math.min(maxScrollY, window.scrollY));
+            if (this.page === 'cart') {
+              this.navHidden = false;
+              lastScrollY = currentScrollY;
+              navScrollDistance = 0;
+              scrollTicking = false;
+              return;
+            }
             if (Date.now() < (this._navScrollLockUntil || 0)) {
               lastScrollY = currentScrollY;
               navScrollDistance = 0;

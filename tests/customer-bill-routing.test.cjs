@@ -63,3 +63,20 @@ test('staff returns to tables when a bill closes during use', async () => {
   await syncBill.call(app);
   assert.equal(location.href, 'https://example.test/staff/tables/');
 });
+
+test('scrolling keeps mobile navigation open in the cart but still collapses it on the menu', async () => {
+  const { app, listeners, context } = setup();
+  const frames = [];
+  context.window.requestAnimationFrame = callback => frames.push(callback);
+  context.document.documentElement.scrollHeight = 2000;
+  await app.init();
+  app.page = 'cart';
+  app.navHidden = true;
+  context.window.scrollY = 200;
+  listeners.scroll(); frames.shift()();
+  assert.equal(app.navHidden, false);
+  app.page = 'menu';
+  context.window.scrollY = 300;
+  listeners.scroll(); frames.shift()();
+  assert.equal(app.navHidden, true);
+});
