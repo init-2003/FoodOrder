@@ -434,7 +434,7 @@ $base = ($base === '' || $base === '.') ? '/' : $base . '/';
         <div class="cart-items"><template x-for="n in 2" :key="n"><div class="cart-line" aria-hidden="true"><div class="skeleton skeleton-cart-image"></div><div class="cart-line-content"><div class="skeleton skeleton-line skeleton-title"></div><div class="skeleton skeleton-line skeleton-short"></div><div class="skeleton skeleton-line skeleton-price"></div></div></div></template></div>
         <div class="cart-checkout"><div class="skeleton skeleton-line"></div><div class="skeleton skeleton-line skeleton-title"></div><div class="skeleton skeleton-cart-button"></div></div>
       </div>
-      <template x-if="billLoaded && !loading"><div class="cart-loaded">
+      <template x-if="billLoaded && !loading"><div class="cart-loaded" :class="{ 'has-checkout': cart.length > 0 }">
       <div class="cart-panel-header"><div><span class="eyebrow" x-text="(tableName || (t('โต๊ะ') + ' ' + table)) + (docNo ? ' · #' + docNo : '')">A GOOD MEAL AWAITS</span><h2><span class="cart-heading-text" x-text="t('ตะกร้าอาหาร')">ตะกร้าอาหาร</span> <span :class="{'bump-active': cartBump}" x-text="cartCount" x-cloak></span></h2></div><svg class="icon cart-header-icon"><use href="#i-bag"/></svg></div>
       <div class="cart-sync-error" x-show="cartError" x-cloak role="alert"><span x-text="language === 'en' ? 'Cart is unavailable. Displayed items may be out of date.' : 'เชื่อมต่อตะกร้าไม่ได้ รายการที่แสดงอาจไม่เป็นปัจจุบัน'"></span><button type="button" @click="retryCart()" :disabled="sending" x-text="t('ลองอีกครั้ง')"></button></div>
       <div class="cart-items" :class="{'is-empty': !cart.length}">

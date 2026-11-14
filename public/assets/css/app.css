@@ -6558,8 +6558,44 @@ body.account-drawer-open .topbar {
   .history-card .history-cart-line .history-quantity { padding: 0; font-size: 12px; }
 }
 
+/* Keep checkout above the mobile navigation while the cart is visible. */
+@media (max-width: 760px), (min-width: 761px) and (max-width: 1100px) and (orientation: portrait) {
+  .cart-panel.cart-page-active { overflow: visible; }
+  .cart-page-active .cart-loaded.has-checkout { padding-bottom: calc(90px + env(safe-area-inset-bottom, 0px)); }
+  .cart-page-active .cart-loaded > .cart-checkout {
+    position: sticky;
+    bottom: calc(88px + env(safe-area-inset-bottom, 0px));
+    z-index: 20;
+    padding: 12px 24px;
+    background: #fff;
+    border-top: 1px solid #edf0eb;
+    box-shadow: none;
+  }
+  .cart-page-active .cart-loaded > .cart-checkout::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    height: calc(88px + env(safe-area-inset-bottom, 0px));
+    background: #fff;
+    pointer-events: none;
+  }
+}
+
 @media (max-width: 760px), (min-width: 761px) and (max-width: 1100px) and (orientation: portrait) {
   .cart-line-actions { gap: 0; }
   .cart-line-actions button { width: 44px; height: 44px; flex: 0 0 44px; }
   .cart-line-actions button .icon { width: 20px; height: 20px; }
+}
+
+/* Match cart items to the mobile menu list. */
+@media (max-width: 760px), (min-width: 761px) and (max-width: 1100px) and (orientation: portrait) {
+  .cart-page-active .cart-items { padding-inline: 24px; }
+  .cart-page-active .cart-items > .cart-line { align-items: center; gap: 12px; padding: 16px 0; border-bottom: 1px solid #edf0eb; }
+  .cart-page-active .cart-items > .cart-line > img { width: 96px; height: 96px; flex: 0 0 96px; align-self: flex-start; border-radius: 10px; object-fit: cover; background: #f3f4f1; }
+  .cart-page-active .cart-line-content { display: flex; flex-direction: column; align-self: stretch; min-width: 0; }
+  .cart-page-active .cart-line-title h3 { flex: 1; min-width: 0; font-weight: 600; line-height: 1.4; overflow-wrap: anywhere; }
+  .cart-page-active .cart-note { margin: 2px 0 6px; font-size: 13px; line-height: 1.45; white-space: normal; overflow-wrap: anywhere; }
+  .cart-page-active .cart-line-bottom { margin-top: auto; padding-top: 5px; }
 }
