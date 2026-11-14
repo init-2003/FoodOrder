@@ -1522,6 +1522,8 @@ html[data-page="menu"] .closed-section {
   letter-spacing: -1px
 }
 
+.cart-checkout .summary-total { border-top: 0; margin-top: 0; }
+
 .primary-button {
   background: var(--orange);
   color: #fff;
