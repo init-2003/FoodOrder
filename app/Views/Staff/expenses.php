@@ -64,21 +64,21 @@ $months = ['มกราคม','กุมภาพันธ์','มีนา�
 <main class="expense-shell">
   <div class="expense-heading">
     <div><h1 data-i18n="ค่าใช้จ่าย">ค่าใช้จ่าย</h1></div>
-    <button type="button" class="expense-add" id="expense-open" <?= $optionsError !== '' ? 'disabled' : '' ?>>บันทึกค่าใช้จ่าย</button>
+    <button type="button" class="expense-add" id="expense-open" data-i18n="บันทึกค่าใช้จ่าย" <?= $optionsError !== '' ? 'disabled' : '' ?>>บันทึกค่าใช้จ่าย</button>
   </div>
-  <?php if (isset($_GET['saved']) && preg_match('/^[a-zA-Z0-9]{1,15}$/D', (string)$_GET['saved'])): ?><p class="expense-saved" role="status">บันทึกค่าใช้จ่ายแล้ว เลขที่เอกสาร <?= htmlspecialchars((string)$_GET['saved'], ENT_QUOTES, 'UTF-8') ?></p><?php endif ?>
-  <?php if ($optionsError !== ''): ?><p class="expense-message" role="status"><?= htmlspecialchars($optionsError, ENT_QUOTES, 'UTF-8') ?></p><?php endif ?>
+  <?php if (isset($_GET['saved']) && preg_match('/^[a-zA-Z0-9]{1,15}$/D', (string)$_GET['saved'])): ?><p class="expense-saved" role="status"><span data-i18n="บันทึกค่าใช้จ่ายแล้ว เลขที่เอกสาร">บันทึกค่าใช้จ่ายแล้ว เลขที่เอกสาร</span> <?= htmlspecialchars((string)$_GET['saved'], ENT_QUOTES, 'UTF-8') ?></p><?php endif ?>
+  <?php if ($optionsError !== ''): ?><p class="expense-message" role="status" data-i18n="<?= htmlspecialchars($optionsError, ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($optionsError, ENT_QUOTES, 'UTF-8') ?></p><?php endif ?>
   <dialog id="expense-dialog" class="expense-dialog" aria-labelledby="expense-dialog-title">
     <form id="expense-form">
-      <div class="expense-dialog-header"><div><h2 id="expense-dialog-title">บันทึกค่าใช้จ่าย</h2></div><button type="button" id="expense-close" aria-label="ปิด"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+      <div class="expense-dialog-header"><div><h2 id="expense-dialog-title" data-i18n="บันทึกค่าใช้จ่าย">บันทึกค่าใช้จ่าย</h2></div><button type="button" id="expense-close" aria-label="ปิด" data-i18n-aria-label="ปิด"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
       <input type="hidden" name="submission_token" value="<?= htmlspecialchars($_SESSION['expense_submission']['token'], ENT_QUOTES, 'UTF-8') ?>">
-      <label>วันที่ <input type="date" name="date" value="<?= $now->format('Y-m-d') ?>" required></label>
-      <label>ประเภทค่าใช้จ่าย <select name="type" required><option value="">เลือกประเภทค่าใช้จ่าย</option><?php foreach ($expenseOptions['types'] as $type): ?><option value="<?= htmlspecialchars($type['id'], ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($type['name'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></option><?php endforeach ?></select></label>
-      <label>รายละเอียด <textarea name="detail" rows="3" maxlength="1000" placeholder="ระบุรายละเอียดค่าใช้จ่าย" required></textarea></label>
-      <label>จำนวนเงิน (บาท) <input type="number" name="amount" min="0.01" max="999999999999.99" step="0.01" inputmode="decimal" placeholder="0.00" required></label>
-      <label>ผู้จ่าย <select name="payer" required><option value="">เลือกผู้จ่าย</option><?php foreach ($expenseOptions['staff'] as $payer): ?><option value="<?= htmlspecialchars($payer['id'], ENT_QUOTES, 'UTF-8') ?>" <?= $payer['id'] === trim((string)($_SESSION['Em_Id'] ?? '')) ? 'selected' : '' ?>><?= htmlspecialchars($payer['name'] !== '' ? $payer['name'] : $payer['id'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></option><?php endforeach ?></select></label>
+      <label><span data-i18n="วันที่">วันที่</span> <input type="date" name="date" value="<?= $now->format('Y-m-d') ?>" required></label>
+      <label><span data-i18n="ประเภทค่าใช้จ่าย">ประเภทค่าใช้จ่าย</span> <select name="type" required><option value="" data-i18n="เลือกประเภทค่าใช้จ่าย">เลือกประเภทค่าใช้จ่าย</option><?php foreach ($expenseOptions['types'] as $type): ?><option value="<?= htmlspecialchars($type['id'], ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($type['name'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></option><?php endforeach ?></select></label>
+      <label><span data-i18n="รายละเอียด">รายละเอียด</span> <textarea name="detail" rows="3" maxlength="1000" placeholder="ระบุรายละเอียดค่าใช้จ่าย" data-i18n-placeholder="ระบุรายละเอียดค่าใช้จ่าย" required></textarea></label>
+      <label><span data-i18n="จำนวนเงิน (บาท)">จำนวนเงิน (บาท)</span> <input type="number" name="amount" min="0.01" max="999999999999.99" step="0.01" inputmode="decimal" placeholder="0.00" required></label>
+      <label><span data-i18n="ผู้จ่าย">ผู้จ่าย</span> <select name="payer" required><option value="" data-i18n="เลือกผู้จ่าย">เลือกผู้จ่าย</option><?php foreach ($expenseOptions['staff'] as $payer): ?><option value="<?= htmlspecialchars($payer['id'], ENT_QUOTES, 'UTF-8') ?>" <?= $payer['id'] === trim((string)($_SESSION['Em_Id'] ?? '')) ? 'selected' : '' ?>><?= htmlspecialchars($payer['name'] !== '' ? $payer['name'] : $payer['id'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></option><?php endforeach ?></select></label>
       <p id="expense-form-error" role="alert" hidden></p>
-      <div class="expense-dialog-actions"><button type="button" id="expense-cancel">ยกเลิก</button><button type="submit" id="expense-save">บันทึก</button></div>
+      <div class="expense-dialog-actions"><button type="button" id="expense-cancel" data-i18n="ยกเลิก">ยกเลิก</button><button type="submit" id="expense-save" data-i18n="บันทึก">บันทึก</button></div>
     </form>
   </dialog>
   <form method="get" action="staff/expenses/" class="expense-filters">

@@ -4,6 +4,7 @@ require_once __DIR__ . '/../../app/Services/functions.php';
 require_once __DIR__ . '/../../app/Database/db.php';
 require_once __DIR__ . '/../../app/Security/session.php';
 require_once __DIR__ . '/../Services/ProductUploadService.php';
+require_once __DIR__ . '/../Services/AuditLog.php';
 if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') jsonResponse(['error' => ['message' => 'Method not allowed']], 405);
 if (empty($_SESSION['Em_Id'])) jsonResponse(['error' => ['message' => 'กรุณาเข้าสู่ระบบพนักงาน']], 401);
 $branch = trim((string)($_POST['branch'] ?? ''));
@@ -16,6 +17,7 @@ if (($_POST['action'] ?? '') === 'delete') {
     $pdo = Database::getConnection();
     if (!$pdo) jsonResponse(['error' => ['message' => 'ไม่สามารถเชื่อมต่อฐานข้อมูลได้']], 503);
     $result = removeProductImage($pdo, $id, $branch, $expected);
+    auditEvent('product_image.delete', $result['status'] < 400 ? 'success' : 'failure', ['branch' => $branch, 'subject' => $id, 'details' => ['before' => $expected, 'after' => $result['status'] < 400 ? null : $expected]]);
     jsonResponse($result['body'], $result['status']);
 }
 $file = $_FILES['image'] ?? null;
@@ -26,4 +28,5 @@ if (!$info || !in_array($info['mime'] ?? '', ['image/jpeg', 'image/png', 'image/
 $pdo = Database::getConnection();
 if (!$pdo) jsonResponse(['error' => ['message' => 'ไม่สามารถเชื่อมต่อฐานข้อมูลได้']], 503);
 $result = storeProductImage($pdo, $id, $branch, $file, $info);
+auditEvent('product_image.save', $result['status'] < 400 ? 'success' : 'failure', ['branch' => $branch, 'subject' => $id, 'details' => ['after' => $result['body']['image'] ?? null]]);
 jsonResponse($result['body'], $result['status']);

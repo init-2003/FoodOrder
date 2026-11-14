@@ -6,6 +6,7 @@ require_once __DIR__ . '/../Database/db.php';
 require_once __DIR__ . '/../Services/OrderService.php';
 
 require_once __DIR__ . '/../../app/Security/session.php';
+require_once __DIR__ . '/../Services/AuditLog.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     jsonResponse(['error' => ['code' => 'METHOD_NOT_ALLOWED', 'message' => 'Method not allowed']], 405);
@@ -67,11 +68,13 @@ if ($idempotencyKey !== '') {
 
 try {
     $result = submitOrder($pdo, $data, $docInput, $tableInput, $tablePadded, $tableUnpadded, $branchId, $pbUser, $sessionToken, $idempotencyKey, $fromCart, $requestHash);
+    auditEvent('order.submit', $result['status'] < 400 ? 'success' : 'failure', ['branch' => $branchId, 'document' => $result['body']['docNo'] ?? $docInput, 'table' => $tableInput, 'details' => ['order_no' => $result['body']['orderNo'] ?? null, 'total' => $result['body']['total'] ?? null, 'reason' => $result['body']['error']['code'] ?? null]]);
     jsonResponse($result['body'], $result['status']);
 } catch (Throwable $e) {
     if ($pdo->inTransaction()) {
         $pdo->rollBack();
     }
     appLog('error', 'order request failed', ['error' => $e->getMessage()]);
+    auditEvent('order.submit', 'failure', ['branch' => $branchId, 'document' => $docInput, 'table' => $tableInput, 'details' => ['reason' => 'order_failed']]);
     jsonResponse(['error' => ['code' => 'ORDER_FAILED', 'message' => 'เกิดข้อผิดพลาดในการบันทึกออเดอร์ กรุณาลองอีกครั้ง']], 500);
 }

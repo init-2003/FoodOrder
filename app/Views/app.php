@@ -297,7 +297,15 @@ $base = ($base === '' || $base === '.') ? '/' : $base . '/';
             </div>
             <div class="staff-field">
               <label for="staff-password" x-text="t('รหัสผ่าน')">รหัสผ่าน</label>
-              <input id="staff-password" type="password" x-model="loginPassword" autocomplete="current-password" required :placeholder="t('กรอกรหัสผ่าน')" :disabled="loginLoading">
+              <div class="staff-password-wrap" x-data="{ showPassword: false }">
+                <input id="staff-password" :type="showPassword ? 'text' : 'password'" type="password" x-model="loginPassword" autocomplete="current-password" required :placeholder="t('กรอกรหัสผ่าน')" :disabled="loginLoading">
+                <button type="button" class="staff-password-toggle" @click="showPassword = !showPassword" :aria-label="showPassword ? (language === 'en' ? 'Hide password' : 'ซ่อนรหัสผ่าน') : (language === 'en' ? 'Show password' : 'แสดงรหัสผ่าน')" :aria-pressed="showPassword" :disabled="loginLoading">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <g x-show="showPassword" x-cloak><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></g>
+                    <g x-show="!showPassword"><path d="M3 10c2 3 5.1 4.5 9 4.5s7-1.5 9-4.5M5 13l-1.5 2M9 14.3l-.6 2.4M15 14.3l.6 2.4M19 13l1.5 2"/></g>
+                  </svg>
+                </button>
+              </div>
             </div>
             <label class="staff-remember"><input type="checkbox" x-model="loginRemember" :disabled="loginLoading"><span x-text="t('จำการเข้าสู่ระบบ')">จำการเข้าสู่ระบบ</span></label>
             <button type="submit" class="staff-login-button" :disabled="loginLoading"><span class="spinner" x-show="loginLoading" x-cloak></span><span x-text="loginLoading ? t('กำลังเข้าสู่ระบบ...') : t('เข้าสู่ระบบ')">เข้าสู่ระบบ</span></button>
@@ -321,7 +329,7 @@ $base = ($base === '' || $base === '.') ? '/' : $base . '/';
             <h2 x-text="t('เมนูขายดี')">เมนูขายดี</h2>
             <div class="food-grid recommendation-grid"><template x-for="(item, index) in recommendedItems" :key="item.id">
               <article class="food-card recommendation-card" role="button" tabindex="0" @click="openDetail(item)" @keydown.enter.prevent="openDetail(item)" @keydown.space.prevent="openDetail(item)" :aria-label="t('ดูรายละเอียด ') + item.name">
-                <div class="food-image-button"><img :src="item.image" :alt="item.name" loading="lazy"><span class="recommendation-rank"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M13.1 2.4c.4 3.1-1.6 4.5-3.1 6.2-1.3 1.4-2.4 2.9-2.4 5.2 0 1.2.5 2.2 1.2 2.8-.1-2 1.2-3.6 3-4.9 0 1.9 1.3 2.7 2 3.9.5.8.7 1.7.5 2.6 1.4-.7 2.3-2.2 2.3-4.1 0-2.3-1-4.4-2.4-6.1 3.8 1.9 6 5 6 8.3A8.2 8.2 0 0 1 12 24a8.2 8.2 0 0 1-8.2-8.2c0-4.7 2.6-7.4 5.2-9.6 1.4-1.2 2.8-2.4 4.1-3.8Z"/></svg><span x-text="t('ขายดี') + ' #' + (index + 1)"></span></span></div>
+                <div class="food-image-button"><img :src="item.image" :alt="item.name" loading="lazy"><span class="recommendation-rank menu-rank-badge"><svg aria-hidden="true"><use href="#i-flame"/></svg><span x-text="t('ขายดี') + ' #' + (index + 1)"></span></span></div>
                 <div class="food-card-body"><span class="food-title" x-text="item.name"></span><div class="food-card-bottom"><strong class="price" x-text="money(item.price)"></strong><span class="menu-quick-add" aria-hidden="true"><svg class="icon"><use href="#i-plus"/></svg></span></div></div>
               </article>
             </template></div>
@@ -329,7 +337,7 @@ $base = ($base === '' || $base === '.') ? '/' : $base . '/';
           <section class="menu-recommendations" x-show="trendingItems.length" x-cloak>
             <h2 x-text="t('เมนูมาแรง')"></h2>
             <div class="food-grid recommendation-grid"><template x-for="(item, index) in trendingItems" :key="item.id">
-              <article class="food-card recommendation-card" role="button" tabindex="0" @click="openDetail(item)" @keydown.enter.prevent="openDetail(item)" @keydown.space.prevent="openDetail(item)" :aria-label="t('ดูรายละเอียด ') + item.name"><div class="food-image-button"><img :src="item.image" :alt="item.name" loading="lazy"><span class="recommendation-rank trending-rank"><svg aria-hidden="true"><use href="#i-bolt"/></svg><span x-text="t('มาแรง') + ' #' + (index + 1)"></span></span></div><div class="food-card-body"><span class="food-title" x-text="item.name"></span><div class="food-card-bottom"><strong class="price" x-text="money(item.price)"></strong><span class="menu-quick-add" aria-hidden="true"><svg class="icon"><use href="#i-plus"/></svg></span></div></div></article>
+              <article class="food-card recommendation-card" role="button" tabindex="0" @click="openDetail(item)" @keydown.enter.prevent="openDetail(item)" @keydown.space.prevent="openDetail(item)" :aria-label="t('ดูรายละเอียด ') + item.name"><div class="food-image-button"><img :src="item.image" :alt="item.name" loading="lazy"><span class="recommendation-rank menu-rank-badge trending-rank"><svg aria-hidden="true"><use href="#i-bolt"/></svg><span x-text="t('มาแรง') + ' #' + (index + 1)"></span></span></div><div class="food-card-body"><span class="food-title" x-text="item.name"></span><div class="food-card-bottom"><strong class="price" x-text="money(item.price)"></strong><span class="menu-quick-add" aria-hidden="true"><svg class="icon"><use href="#i-plus"/></svg></span></div></div></article>
             </template></div>
           </section>
           <section class="menu-recommendations" x-show="pairedItems.length" x-cloak>
@@ -368,7 +376,7 @@ $base = ($base === '' || $base === '.') ? '/' : $base . '/';
           </div>
         </div>
 
-        <p class="page-subtitle history-subtitle" x-show="billLoaded" x-cloak><span x-text="docSts === 1 ? t('ประวัติรายการอาหารที่สั่งทั้งหมดจะแสดงที่นี่') : t('รายการที่ส่งเข้าครัวทั้งหมดจะแสดงที่นี่')">รายการที่ส่งเข้าครัวทั้งหมดจะแสดงที่นี่</span> <span aria-hidden="true">👇</span></p>
+        <p class="page-subtitle history-subtitle" x-show="billLoaded" x-cloak><span x-text="t('ประวัติรายการอาหารที่สั่งทั้งหมดจะแสดงที่นี่')">ประวัติรายการอาหารที่สั่งทั้งหมดจะแสดงที่นี่</span> <span aria-hidden="true">👇</span></p>
 
         <!-- Empty state when orders is empty -->
         <div class="empty-state history-empty" x-show="billLoaded && !historyItems.length" x-cloak>
@@ -385,9 +393,12 @@ $base = ($base === '' || $base === '.') ? '/' : $base . '/';
                 <div class="cart-line history-cart-line">
                   <img :src="line.image" :alt="line.name">
                   <div class="cart-line-content">
-                    <div class="cart-line-title"><h3 x-text="line.name"></h3></div>
-                    <p class="history-item-time" x-show="formatHistoryTime(line.orderedAt)" x-text="formatHistoryTime(line.orderedAt)"></p>
-                    <p class="cart-note" x-show="line.note" x-text="line.note"></p>
+                    <div class="history-item-heading"><div class="history-item-heading-main"><div class="cart-line-title"><h3 class="history-name" x-text="line.name"></h3></div><p class="history-item-time" x-show="formatHistoryTime(line.orderedAt)" x-text="formatHistoryTime(line.orderedAt)"></p></div></div>
+                    <div class="history-item-status" :class="{ 'is-waiting': line.foodQueSts === 'W' }" x-show="!closed && line.statusDesc" x-cloak>
+                      <svg class="history-status-art" x-show="line.foodQueSts === 'W'" viewBox="0 0 32 32" fill="none" aria-hidden="true"><circle cx="16" cy="16" r="12" fill="#e7a54e"/><circle cx="16" cy="16" r="7.5" stroke="#fff" stroke-width="1.8"/><path d="M16 11.5v4.8l3.2 2" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                      <svg class="history-status-art" x-show="line.foodQueSts === 'P'" x-cloak viewBox="0 0 32 32" fill="none" aria-hidden="true"><circle cx="16" cy="16" r="12" fill="#70a878"/><path d="m10.5 16 3.7 3.7 7.3-7.3" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                      <span x-text="t(line.statusDesc)"></span>
+                    </div>
                     <div class="cart-line-bottom">
                       <strong x-text="money(line.price * line.qty)"></strong>
                       <span class="history-quantity" x-text="t('จำนวน') + ' ' + line.qty + (line.unit ? ' ' + line.unit : '')"></span>

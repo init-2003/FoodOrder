@@ -5,6 +5,7 @@ require_once __DIR__ . '/../../app/Services/functions.php';
 require_once __DIR__ . '/../../app/Database/db.php';
 
 require_once __DIR__ . '/../../app/Security/session.php';
+require_once __DIR__ . '/../Services/AuditLog.php';
 
 if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
     jsonResponse(['error' => ['code' => 'METHOD_NOT_ALLOWED', 'message' => 'Method not allowed']], 405);
@@ -112,6 +113,8 @@ try {
     $_SESSION['Table_Name'] = $opened['tableName'];
     $_SESSION['Fn_Doc_No'] = $opened['docNo'];
 
+    auditEvent('table.open', 'success', ['branch' => $branchId, 'document' => $opened['docNo'], 'table' => $opened['tableId'], 'details' => ['created' => $opened['created'], 'guests' => $opened['guests']]]);
+
     jsonResponse([
         'success' => true,
         'result' => 'OK',
@@ -128,6 +131,7 @@ try {
         'guests' => $opened['guests'],
     ]);
 } catch (Throwable $e) {
+    auditEvent('table.open', 'failure', ['branch' => $branchId, 'table' => $tableInput, 'details' => ['reason' => 'open_failed']]);
     appLog('error', 'open-table request failed', ['error' => $e->getMessage()]);
     jsonResponse([
         'success' => false,

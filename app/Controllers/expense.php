@@ -4,6 +4,7 @@ require_once __DIR__ . '/../Services/functions.php';
 require_once __DIR__ . '/../Security/session.php';
 require_once __DIR__ . '/../Services/ExpenseAccessService.php';
 require_once __DIR__ . '/../Services/ExpenseWriteService.php';
+require_once __DIR__ . '/../Services/AuditLog.php';
 if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') jsonResponse(['error' => ['message' => 'Method not allowed']], 405);
 $employee = trim((string)($_SESSION['Em_Id'] ?? '')); $user = trim((string)($_SESSION['SUser'] ?? ''));
 if ($employee === '' || $user === '') jsonResponse(['error' => ['message' => 'กรุณาเข้าสู่ระบบพนักงาน']], 401);
@@ -19,10 +20,13 @@ try {
     $doc = saveExpense($db, $branch, $user, $data);
     $_SESSION['expense_submission']['doc'] = $doc;
     $_SESSION['expense_submission']['date'] = $data['date'];
+    auditEvent('expense.create', 'success', ['branch' => $branch, 'document' => $doc, 'details' => ['date' => $data['date'], 'amount' => $data['amount'], 'type' => $data['type'], 'payer' => $data['payer']]]);
     jsonResponse(['success' => true, 'docNo' => $doc, 'date' => $data['date']]);
 } catch (InvalidArgumentException $e) {
+    auditEvent('expense.create', 'failure', ['details' => ['reason' => 'invalid_input']]);
     jsonResponse(['error' => ['message' => $e->getMessage()]], 422);
 } catch (Throwable $e) {
+    auditEvent('expense.create', 'failure', ['details' => ['reason' => 'save_failed']]);
     appLog('error', 'Expense save failed', ['error' => $e->getMessage()]);
     jsonResponse(['error' => ['message' => 'ไม่สามารถบันทึกค่าใช้จ่ายได้ กรุณาติดต่อผู้ดูแลระบบ']], 503);
 }

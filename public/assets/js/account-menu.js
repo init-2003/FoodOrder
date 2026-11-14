@@ -117,6 +117,11 @@
       }
 
       if (panel) {
+        // Start closing the mobile drawer before the logout confirmation opens.
+        panel.addEventListener('click', event => {
+          if (event.target.closest('.account-menu-logout')) closeMenu();
+        }, true);
+
         panel.addEventListener('click', event => {
           if (isPinnedDesktop()) return;
           if (event.target.closest('.account-menu-drawer-close')) {

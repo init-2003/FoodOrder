@@ -130,7 +130,7 @@ function submitOrder(PDO $pdo, array $data, string $docInput, string $tableInput
         $alreadyConfirmed = count(array_filter($drafts, fn($row) => $row['State'] === 'S' && $row['Order_Key'] === $idempotencyKey));
         if ($alreadyConfirmed === count($drafts)) {
             $pdo->rollBack();
-            return writeServiceResult(['success' => true, 'docNo' => $docNo, 'idempotent' => true, 'message' => 'รายการนี้ส่งเข้าครัวแล้ว']);
+            return writeServiceResult(['success' => true, 'docNo' => $docNo, 'idempotent' => true, 'message' => 'รอยืนยันออเดอร์']);
         }
         foreach ($drafts as $row) {
             if ($row['State'] !== 'D' || $row['Food_Que_STS'] === null || trim((string)$row['Food_Que_STS']) !== '' || $row['expectedRevision'] === false || $row['expectedRevision'] !== (int)$row['Revision']) {
@@ -140,7 +140,7 @@ function submitOrder(PDO $pdo, array $data, string $docInput, string $tableInput
         }
     }
 
-    // Confirm owned draft rows or insert quick orders, then cut stock.
+    // Submit owned drafts or quick orders and deduct stock in the same transaction.
     foreach ($data['items'] as $item) {
         $draft = $fromCart ? $drafts[(string)$item['key']] : null;
         $itemId = trim((string)($draft['Trade_ID'] ?? $item['id'] ?? ''));
@@ -188,9 +188,9 @@ function submitOrder(PDO $pdo, array $data, string $docInput, string $tableInput
         $unitHex = Database::hexThai($uName);
         $groupProHex = Database::hexThai($tradeGroupPro ?: ($note ? "($note)" : ''));
 
-        // 1. Insert into Fnt_Detail (Food_Que_STS = 'S')
+        // Save the order as W while it awaits confirmation from POS.
         if ($draft) {
-            $stmt = $pdo->prepare("UPDATE dbo.Fnt_Detail SET Food_Que_STS='S', Print_STS='', Fn_Doc_Date=CONVERT(datetime, CAST(? AS varchar(19)), 120), Fn_Doc_Date_Time=CONVERT(datetime, CAST(? AS varchar(19)), 120) WHERE ID_NO=? AND Branch_ID=? AND Fn_Doc_No=? AND Food_Que_STS=''");
+            $stmt = $pdo->prepare("UPDATE dbo.Fnt_Detail SET Food_Que_STS='W', Print_STS='1', Fn_Doc_Date=CONVERT(datetime, CAST(? AS varchar(19)), 120), Fn_Doc_Date_Time=CONVERT(datetime, CAST(? AS varchar(19)), 120) WHERE ID_NO=? AND Branch_ID=? AND Fn_Doc_No=? AND Food_Que_STS=''");
             $stmt->execute([$dateOnly, $now, $draft['Detail_ID'], $branchId, $docNo]);
             if ($stmt->rowCount() !== 1) throw new RuntimeException('Cart detail changed during confirmation');
             $stmt->closeCursor();
@@ -209,13 +209,12 @@ function submitOrder(PDO $pdo, array $data, string $docInput, string $tableInput
             ?, CAST(? AS decimal(18,4)),
             CONVERT(nvarchar(20), $unitHex), CONVERT(nvarchar(50), $typeHex), ?, CONVERT(nvarchar(50), $groupProHex),
             CAST(? AS money), CAST(? AS money), ?, CONVERT(datetime, CAST(? AS varchar(19)), 120),
-            '', 'S', ?
+            '1', 'W', ?
         )";
         $stmt = $pdo->prepare($sqlDetail);
         $stmt->execute([$branchId, $docNo, $dateOnly, $now, $branchId, $docNo, $itemId, $amountno, $qtyCutStock, $foodType, $costPrice, $salePrice, $pbUser, $now, $tradePoint]);
         $stmt->closeCursor();
         }
-
         // 2. Cut Stock in Trade
         $sqlCut = "UPDATE Trade SET Qty = Qty - ? OUTPUT inserted.Trade_ID
                    WHERE Branch_ID = ? AND ((Trade_ID = ?) OR (Group_Pro = ? AND Group_Pro <> ''))";
@@ -352,7 +351,7 @@ function submitOrder(PDO $pdo, array $data, string $docInput, string $tableInput
         'orderNo' => $orderNo,
         'table' => $tableUnpadded,
         'total' => $total,
-        'message' => 'บันทึกออเดอร์ส่งเข้าห้องครัวและตัดสต็อกสำเร็จ (สถานะ S)',
+        'message' => 'รอยืนยันออเดอร์',
     ];
 
     if ($idempotencyKey !== '') {

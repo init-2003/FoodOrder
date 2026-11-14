@@ -4,6 +4,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/../../app/Services/functions.php';
 require_once __DIR__ . '/../Database/db.php';
 require_once __DIR__ . '/../Services/CartService.php';
+require_once __DIR__ . '/../Services/AuditLog.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     jsonResponse(['error' => ['code' => 'METHOD_NOT_ALLOWED', 'message' => 'Method not allowed']], 405);
@@ -48,8 +49,12 @@ if (!$pdo) {
 
 try {
     $result = processCart($pdo, $action, $docNo, $branch, $session, $key, $operation, $itemInput, $operationHash);
+    if ($action !== 'list' && ($result['status'] >= 400 || !empty($result['audit']))) {
+        auditEvent('cart.' . $action, $result['status'] < 400 ? 'success' : 'failure', ['branch' => $branch, 'document' => $docNo, 'details' => $result['audit'] ?? ['reason' => $result['body']['error']['code'] ?? 'failed']]);
+    }
     jsonResponse($result['body'], $result['status']);
 } catch (Throwable $e) {
+    if ($action !== 'list') auditEvent('cart.' . $action, 'failure', ['branch' => $branch, 'document' => $docNo, 'details' => ['reason' => 'cart_failed']]);
     if ($pdo->inTransaction()) $pdo->rollBack();
     appLog('error', 'cart request failed', ['error' => $e->getMessage()]);
     jsonResponse(['error' => ['code' => 'CART_FAILED', 'message' => 'บันทึกตะกร้าไม่สำเร็จ กรุณาลองอีกครั้ง']], 500);

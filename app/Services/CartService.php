@@ -20,7 +20,7 @@ function processCart(PDO $pdo, string $action, string $docNo, string $branch, st
     }
 
     if ($action !== 'list') {
-        $stmt = $pdo->prepare("SELECT w.Detail_ID, w.State, w.Revision, w.Last_Operation, w.Last_Operation_Hash, d.Food_Que_STS, d.Trade_ID
+        $stmt = $pdo->prepare("SELECT w.Detail_ID, w.State, w.Revision, w.Last_Operation, w.Last_Operation_Hash, d.Food_Que_STS, d.Trade_ID, d.Qty, CONVERT(varbinary(max), w.Note) AS Audit_Note
             FROM dbo.Web_Cart_Lines w WITH (UPDLOCK, ROWLOCK)
             LEFT JOIN dbo.Fnt_Detail d WITH (UPDLOCK, ROWLOCK) ON d.ID_NO=w.Detail_ID
             WHERE w.Branch_ID=? AND w.Fn_Doc_No=? AND w.Session_Token=? AND w.Cart_Key=?");
@@ -33,6 +33,12 @@ function processCart(PDO $pdo, string $action, string $docNo, string $branch, st
             return writeServiceResult(['error' => ['code' => 'IDEMPOTENCY_MISMATCH', 'message' => 'ข้อมูลคำขอไม่ตรงกับรายการก่อนหน้า']], 409);
         }
         $alreadyApplied = $sameOperation && (($action === 'upsert' && $existing['State'] === 'D') || ($action === 'delete' && $existing['State'] === 'X'));
+        $audit = null;
+        if (!$alreadyApplied && ($action !== 'delete' || $existing)) {
+            $before = $existing ? ['product_id' => trim((string)$existing['Trade_ID']), 'quantity' => (int)$existing['Qty'], 'note' => Database::decodeThai($existing['Audit_Note'] ?? null)] : null;
+            $after = $action === 'upsert' ? ['product_id' => trim((string)($itemInput['id'] ?? '')), 'quantity' => (int)($itemInput['qty'] ?? 0), 'note' => trim((string)($itemInput['note'] ?? ''))] : null;
+            $audit = ['change' => $action === 'delete' ? 'delete' : ($existing ? 'update' : 'add'), 'before' => $before, 'after' => $after];
+        }
         if ($existing && !$alreadyApplied && ($existing['State'] !== 'D' || $existing['Food_Que_STS'] === null || trim((string)$existing['Food_Que_STS']) !== '')) {
             $pdo->rollBack();
             return writeServiceResult(['error' => ['code' => 'CART_ITEM_CHANGED', 'message' => 'รายการนี้ถูกสั่งหรือเปลี่ยนแปลงแล้ว กรุณาโหลดตะกร้าใหม่']], 409);
@@ -124,6 +130,8 @@ function processCart(PDO $pdo, string $action, string $docNo, string $branch, st
     }
     $stmt->closeCursor();
     $pdo->commit();
-    return writeServiceResult(['success' => true, 'items' => $items]);
+    $result = writeServiceResult(['success' => true, 'items' => $items]);
+    if (!empty($audit)) $result['audit'] = $audit;
+    return $result;
 
 }

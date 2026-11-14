@@ -48,6 +48,9 @@ PHP;
         if ($exit !== 0 || !preg_match('/STATUS:(\d+)/', $stderr, $match)) throw new RuntimeException('API process failed: ' . $stderr);
         return ['status' => (int)$match[1], 'json' => json_decode($stdout, true, 512, JSON_THROW_ON_ERROR)];
     } finally {
+        foreach (glob($tmp . '/storage/audit/*') ?: [] as $auditFile) unlink($auditFile);
+        if (is_dir($tmp . '/storage/audit')) rmdir($tmp . '/storage/audit');
+        if (is_dir($tmp . '/storage')) rmdir($tmp . '/storage');
         foreach (['Database', 'Services', 'Security', 'Views', 'Controllers', 'Middlewares', 'Http'] as $folder) {
             foreach (glob($tmp . '/app/' . $folder . '/*.php') as $file) unlink($file);
             rmdir($tmp . '/app/' . $folder);

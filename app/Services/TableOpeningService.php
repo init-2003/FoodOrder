@@ -56,16 +56,17 @@ function openOrGetTableBill(
 
     try {
         // 1. Check table info & status in pbm_table
-        $tableId = $tablePadded;
+        $tableId = $rawInput;
         $tableName = 'โต๊ะ ' . $tableUnpadded;
         $tableSts = '';
 
         $stmtTable = $pdo->prepare(
             "SELECT TOP 1 Table_ID, CONVERT(varbinary(max), Table_Name) AS Table_Name, Table_STS
              FROM pbm_table WITH (UPDLOCK, ROWLOCK)
-             WHERE (Table_ID = ? OR Table_ID = ? OR Table_ID = ?) AND Branch_ID = ?"
+             WHERE (Table_ID = ? OR Table_ID = ? OR Table_ID = ?) AND Branch_ID = ?
+             ORDER BY CASE WHEN Table_ID = ? THEN 0 ELSE 1 END, Table_ID"
         );
-        $stmtTable->execute([$rawInput, $tablePadded, $tableUnpadded, $branchId]);
+        $stmtTable->execute([$rawInput, $tablePadded, $tableUnpadded, $branchId, $rawInput]);
         $tableRow = $stmtTable->fetch(PDO::FETCH_ASSOC);
         $stmtTable->closeCursor();
 
@@ -172,6 +173,9 @@ function openOrGetTableBill(
             }
         }
 
+        // A new bill must use a table ID that actually exists in PBM_Table.
+        if (!$tableRow) throw new InvalidArgumentException('ไม่พบหมายเลขโต๊ะในระบบ');
+
         // 3. Open table & create new bill in Fnt_Header using pbm_ctrl running number
         $stmtCtrl = $pdo->prepare(
             "SELECT PB_RUN_YR, PB_RUN_NO
@@ -200,21 +204,12 @@ function openOrGetTableBill(
         $stmtUpdCtrl->closeCursor();
 
         // Update Pbm_Table status to 'O' (Open)
-        if ($tableRow) {
-            $stmtUpdTable = $pdo->prepare(
-                "UPDATE Pbm_Table SET Table_STS = 'O'
-                 WHERE Table_ID = ? AND Branch_ID = ?"
-            );
-            $stmtUpdTable->execute([$tableId, $branchId]);
-            $stmtUpdTable->closeCursor();
-        } else {
-            $stmtUpdTable = $pdo->prepare(
-                "UPDATE Pbm_Table SET Table_STS = 'O'
-                 WHERE (Table_ID = ? OR Table_ID = ?) AND Branch_ID = ?"
-            );
-            $stmtUpdTable->execute([$tablePadded, $tableUnpadded, $branchId]);
-            $stmtUpdTable->closeCursor();
-        }
+        $stmtUpdTable = $pdo->prepare(
+            "UPDATE Pbm_Table SET Table_STS = 'O'
+             WHERE Table_ID = ? AND Branch_ID = ?"
+        );
+        $stmtUpdTable->execute([$tableId, $branchId]);
+        $stmtUpdTable->closeCursor();
 
         // Insert new bill header into Fnt_Header
         $datetime1 = date('Y-m-d H:i:s');

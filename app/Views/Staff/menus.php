@@ -21,7 +21,7 @@ $branch = trim((string)(getenv('DEFAULT_BRANCH_ID') ?: ''));
     <section class="manage" aria-labelledby="menu-management-title">
       <div class="manage-heading">
         <div>
-          <h1 id="menu-management-title" data-i18n="รายการอาหาร">รายการอาหาร</h1>
+          <h1 id="menu-management-title" data-i18n="จัดการเมนูอาหาร">จัดการเมนูอาหาร</h1>
         </div>
       </div>
       <div class="filters">
@@ -29,7 +29,7 @@ $branch = trim((string)(getenv('DEFAULT_BRANCH_ID') ?: ''));
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.4"/><path d="m16 16 4.2 4.2"/></svg>
           <input id="search" type="search" data-i18n-placeholder="ค้นหาชื่อหรือรหัสอาหาร" placeholder="ค้นหาชื่อหรือรหัสอาหาร" aria-label="ค้นหาชื่อหรือรหัสอาหาร" autocomplete="off">
         </label>
-        <select id="category" aria-label="หมวดหมู่"><option value="" data-i18n="ทุกหมวดหมู่">ทุกหมวดหมู่</option></select>
+        <select id="category" aria-label="หมวดหมู่" data-i18n-aria-label="หมวดหมู่"><option value="" data-i18n="ทุกหมวดหมู่">ทุกหมวดหมู่</option></select>
       </div>
       <p id="status" role="status" data-i18n="กำลังโหลดรายการอาหาร...">กำลังโหลดรายการอาหาร...</p>
       <div id="items" class="items"></div>

@@ -7,8 +7,8 @@ function loadOrderHistory(PDO $pdo, string $fnDocNo, string $branchId, string $t
     $formatQueStatus = static function (?string $sts): string {
         return match (trim((string)$sts)) {
             'S', '' => 'ส่งเข้าครัวแล้ว',
-            'P' => 'ออกใบเสร็จแล้ว',
-            'W' => 'เสิร์ฟแล้ว',
+            'P' => 'รับออเดอร์แล้ว',
+            'W' => 'รอออเดอร์',
             default => (string)$sts,
         };
     };

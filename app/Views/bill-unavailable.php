@@ -56,8 +56,8 @@
       };
       function setLanguage(language) {
         document.documentElement.lang = language;
-        document.querySelector('.brand-th').textContent = language === 'en' ? 'An Goem' : 'อันเกิม';
-        document.querySelector('.brand').setAttribute('aria-label', language === 'en' ? 'An Goem' : 'อันเกิม');
+        document.querySelector('.brand-th').textContent = language === 'en' ? 'Angeum' : 'อันเกิม';
+        document.querySelector('.brand').setAttribute('aria-label', language === 'en' ? 'Angeum' : 'อันเกิม');
         document.getElementById('message-title').textContent = messages[language][0];
         document.getElementById('message-detail').textContent = messages[language][1];
         document.querySelectorAll('[data-language]').forEach(function (button) { button.setAttribute('aria-pressed', String(button.dataset.language === language)); });

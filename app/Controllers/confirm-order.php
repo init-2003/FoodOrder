@@ -5,6 +5,7 @@ require_once __DIR__ . '/../../app/Services/functions.php';
 require_once __DIR__ . '/../../app/Database/db.php';
 require_once __DIR__ . '/../../app/Security/session.php';
 require_once __DIR__ . '/../Services/ConfirmOrderService.php';
+require_once __DIR__ . '/../Services/AuditLog.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     jsonResponse(['error' => ['code' => 'METHOD_NOT_ALLOWED', 'message' => 'Method not allowed']], 405);
@@ -33,12 +34,14 @@ if (!$pdo) {
 
 try {
     $result = confirmPendingOrder($pdo, $docNo, $tradeId, $branchId);
+    auditEvent('order.confirm', $result['status'] < 400 ? 'success' : 'failure', ['branch' => $branchId, 'document' => $docNo, 'subject' => $tradeId ?: null, 'details' => ['updated_count' => $result['body']['updatedCount'] ?? null, 'reason' => $result['body']['error']['code'] ?? null]]);
     jsonResponse($result['body'], $result['status']);
 } catch (Throwable $e) {
     if ($pdo->inTransaction()) {
         $pdo->rollBack();
     }
     appLog('error', 'confirm-order request failed', ['error' => $e->getMessage()]);
+    auditEvent('order.confirm', 'failure', ['branch' => $branchId, 'document' => $docNo, 'subject' => $tradeId ?: null, 'details' => ['reason' => 'confirm_failed']]);
     jsonResponse(['error' => ['code' => 'CONFIRM_FAILED', 'message' => 'เกิดข้อผิดพลาดในการยืนยันรายการ กรุณาลองอีกครั้ง']], 500);
 }
 

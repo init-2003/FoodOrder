@@ -95,7 +95,7 @@
         try {
           const response = await fetch('api/food-image.php', { method: 'POST', headers: { 'X-CSRF-Token': csrf, 'Accept': 'application/json' }, body: data });
           const result = await response.json();
-          if (!response.ok || !result.success) throw new Error(result.error?.message || t('ลบรูปไม่สำเร็จ'));
+          if (!response.ok || !result.success) throw new Error(t(result.error?.message || 'ลบรูปไม่สำเร็จ'));
           item.image = result.image; item.hasImage = false; card.querySelector('img').src = result.image; image.tabIndex = -1;
           button.textContent = t('เพิ่มรูป'); removeButton.hidden = true;
           Swal.fire({
@@ -131,7 +131,7 @@
         try {
           const response = await fetch('api/food-image.php', { method:'POST', headers:{ 'X-CSRF-Token':csrf, 'Accept':'application/json' }, body:data });
           const result = await response.json();
-          if (!response.ok || !result.success) throw new Error(result.error?.message || 'บันทึกรูปไม่สำเร็จ');
+          if (!response.ok || !result.success) throw new Error(t(result.error?.message || 'บันทึกรูปไม่สำเร็จ'));
           const wasChanged = matching[index].hasImage;
           matching[index].image = result.image; matching[index].hasImage = true; img.src = result.image; image.tabIndex = 0; button.textContent = t('เปลี่ยนรูป'); removeButton.hidden = false;
           const english = document.documentElement.lang === 'en';
@@ -154,7 +154,7 @@
       const data = await response.json(); products = data.items; categories = data.categories;
       for (const cat of data.categories) { const option = document.createElement('option'); option.value = cat.id; option.textContent = cat.name; category.append(option); }
       render(true);
-    } catch (error) { status.textContent = error.message || 'ไม่สามารถโหลดรายการอาหารได้'; }
+    } catch (error) { status.textContent = t(error.message || 'ไม่สามารถโหลดรายการอาหารได้'); }
   }
   search.addEventListener('input', render); category.addEventListener('change', render); init();
   window.addEventListener('staff-language-change', () => { if (products.length) render(); });

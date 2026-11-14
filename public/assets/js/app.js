@@ -29,6 +29,11 @@ function isVerifiedCustomerBill(path, hash, doc) {
 function customerBillPage(page, closed) {
   return page === 'login' ? (closed ? 'closed' : 'menu') : page;
 }
+function redirectClosedStaffBill(staff, isClosed) {
+  if (!staff || !isClosed || !/\/staff\/tables\/(?:[0-9]{6,10}|[a-p]{64})\/?$/.test(location.pathname)) return false;
+  window.location.replace(new URL('staff/tables/', document.baseURI).href);
+  return true;
+}
 const defaultTable = urlParams.get('table') || '';
 const defaultBranch = window.appBranch;
 if (window.location.hash === '#login' && !defaultDoc && !defaultTable) {
@@ -380,7 +385,7 @@ document.addEventListener('alpine:init', () => {
       async logoutStaff() {
         const confirm = await this.alert({
           title: 'ออกจากระบบพนักงาน?',
-          text: this.staff ? `ผู้ใช้งานปัจจุบัน: ${this.staff.name}` : '',
+          text: this.staff ? `${this.language === 'en' ? 'Current user' : 'ผู้ใช้งานปัจจุบัน'}: ${this.staff.name}` : '',
           icon: 'question',
           showCancelButton: true,
           confirmButtonText: 'ออกจากระบบ',
@@ -574,6 +579,7 @@ document.addEventListener('alpine:init', () => {
       },
 
       async init() {
+        if (redirectClosedStaffBill(this.staff, isClosed && !initialCancelled)) return;
         document.documentElement.lang = this.language;
         document.addEventListener('pointerdown', event => {
           if (isMobileLayout() && this.menuSearchFocused && !this.$refs.menuSearchBar?.contains(event.target)) {
@@ -967,6 +973,7 @@ async syncBill() {
           if (bill.tableName) this.tableName = bill.tableName;
           this.guests = bill.guests || null;
           this.docSts = typeof bill.docSts === 'number' ? bill.docSts : 0;
+          if (redirectClosedStaffBill(this.staff, this.docSts === 1)) return;
           this.docStsDesc = bill.docStsDesc || (this.docSts === 0 ? 'เปิดบิล' : this.docSts === 1 ? 'ออกใบเสร็จแล้ว' : 'ยกเลิก');
           this.canOrder = bill.canOrder !== false && this.docSts === 0;
           const wasCancelled = this.isCancelled;
@@ -1457,7 +1464,7 @@ async syncBill() {
         this.navigate('history');
         await this.alert({
           icon: 'success',
-          title: 'ส่งออเดอร์เข้าครัวเรียบร้อยแล้ว!',
+          title: 'รอยืนยันออเดอร์',
           customClass: { popup: 'glass-success' },
           timer: 2000,
           showConfirmButton: false,
@@ -1594,7 +1601,7 @@ async syncBill() {
 
         await this.alert({
           icon: 'success',
-          title: 'ส่งออเดอร์เข้าครัวเรียบร้อยแล้ว!',
+          title: 'รอยืนยันออเดอร์',
           customClass: { popup: 'glass-success' },
           timer: 2000,
           showConfirmButton: false,

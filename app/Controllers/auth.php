@@ -7,6 +7,7 @@ require_once __DIR__ . '/../../app/Database/db.php';
 require_once __DIR__ . '/../../app/Security/session.php';
 require_once __DIR__ . '/../Security/staff-session.php';
 require_once __DIR__ . '/../Services/AuthService.php';
+require_once __DIR__ . '/../Services/AuditLog.php';
 
 $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 $rawInput = file_get_contents('php://input');
@@ -19,6 +20,7 @@ $action = trim((string)($data['action'] ?? $_POST['action'] ?? $_GET['action'] ?
 
 if ($action === 'logout') {
     if ($method !== 'POST') jsonResponse(['error' => ['code' => 'METHOD_NOT_ALLOWED', 'message' => 'Method not allowed']], 405);
+    if (!empty($_SESSION['Em_Id'])) auditEvent('auth.logout', 'success');
     clearStaffSession($_SESSION);
     jsonResponse([
         'success' => true,
@@ -60,6 +62,7 @@ $remember = ($data['remember'] ?? false) === true;
 
 
 if ($username === '' || $password === '') {
+    auditEvent('auth.login', 'failure', ['actor_type' => 'anonymous', 'username' => $username ?: null, 'details' => ['reason' => 'missing_credentials']]);
     jsonResponse([
         'success' => false,
         'error' => [
@@ -73,6 +76,7 @@ if (class_exists(\Symfony\Component\Validator\Validation::class)) {
     $validator = \Symfony\Component\Validator\Validation::createValidator();
     $limits = [new \Symfony\Component\Validator\Constraints\Length(max: 50)];
     if (count($validator->validate($username, $limits)) || count($validator->validate($password, $limits))) {
+        auditEvent('auth.login', 'failure', ['actor_type' => 'anonymous', 'details' => ['reason' => 'invalid_credentials']]);
         jsonResponse(['success' => false, 'error' => ['code' => 'INVALID_CREDENTIALS', 'message' => 'ชื่อผู้ใช้งานหรือรหัสผ่านไม่ถูกต้อง']], 400);
     }
 }
@@ -80,6 +84,7 @@ if (class_exists(\Symfony\Component\Validator\Validation::class)) {
 
 $pdo = Database::getConnection();
 if (!$pdo) {
+    auditEvent('auth.login', 'failure', ['actor_type' => 'anonymous', 'username' => $username, 'details' => ['reason' => 'database_unavailable']]);
     jsonResponse([
         'success' => false,
         'error' => [
@@ -90,6 +95,7 @@ if (!$pdo) {
 }
 
 if (!class_exists(\Symfony\Component\RateLimiter\RateLimiterFactory::class) || !class_exists(\Symfony\Component\Validator\Validation::class)) {
+    auditEvent('auth.login', 'failure', ['actor_type' => 'anonymous', 'username' => $username, 'details' => ['reason' => 'auth_unavailable']]);
     appLog('error', 'Authentication dependencies unavailable');
     jsonResponse(['success' => false, 'error' => ['code' => 'AUTH_UNAVAILABLE', 'message' => 'ไม่สามารถเข้าสู่ระบบได้ กรุณาติดต่อผู้ดูแลระบบ']], 503);
 }
@@ -101,10 +107,12 @@ if (class_exists(\Symfony\Component\RateLimiter\RateLimiterFactory::class)) {
         $loginLimiter = createLoginLimiter($clientIp, dirname(__DIR__, 2) . '/storage/rate-limit');
         $limit = $loginLimiter->consume();
         if (!$limit->isAccepted()) {
+            auditEvent('auth.login', 'failure', ['actor_type' => 'anonymous', 'username' => $username, 'details' => ['reason' => 'rate_limited']]);
             header('Retry-After: ' . max(1, $limit->getRetryAfter()->getTimestamp() - time()));
             jsonResponse(['success' => false, 'error' => ['code' => 'TOO_MANY_ATTEMPTS', 'message' => 'พยายามเข้าสู่ระบบบ่อยเกินไป กรุณาลองใหม่ภายหลัง']], 429);
         }
     } catch (Throwable $e) {
+        auditEvent('auth.login', 'failure', ['actor_type' => 'anonymous', 'username' => $username, 'details' => ['reason' => 'limiter_unavailable']]);
         appLog('error', 'Login rate limiter unavailable', ['error' => $e->getMessage()]);
         jsonResponse(['success' => false, 'error' => ['code' => 'AUTH_UNAVAILABLE', 'message' => 'ไม่สามารถเข้าสู่ระบบได้ กรุณาลองใหม่ภายหลัง']], 503);
     }
@@ -114,6 +122,7 @@ try {
     $row = findStaffCredentials($pdo, $username, $password);
 
     if (!$row) {
+        auditEvent('auth.login', 'failure', ['actor_type' => 'anonymous', 'username' => $username, 'details' => ['reason' => 'invalid_credentials']]);
         jsonResponse([
             'success' => false,
             'error' => [
@@ -146,6 +155,8 @@ try {
     $_SESSION['SUser'] = $sUser;
     $_SESSION['Status'] = $role;
 
+    auditEvent('auth.login', 'success');
+
     jsonResponse([
         'success' => true,
         'authenticated' => true,
@@ -160,6 +171,7 @@ try {
         ],
     ]);
 } catch (Throwable $e) {
+    auditEvent('auth.login', 'failure', ['actor_type' => 'anonymous', 'username' => $username, 'details' => ['reason' => 'auth_error']]);
     appLog('error', 'auth request failed', ['error' => $e->getMessage()]);
     jsonResponse([
         'success' => false,

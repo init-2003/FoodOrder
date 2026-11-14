@@ -3,6 +3,7 @@
   const form = document.querySelector('#expense-form');
   const save = document.querySelector('#expense-save');
   const error = document.querySelector('#expense-form-error');
+  const t = text => window.staffTranslate ? window.staffTranslate(text) : text;
   let saving = false, closing = false;
   document.querySelector('#expense-open').addEventListener('click', () => { error.hidden = true; dialog.showModal(); });
   const close = () => {
@@ -21,7 +22,7 @@
   form.addEventListener('submit', async event => {
     event.preventDefault();
     if (saving || !form.reportValidity()) return;
-    saving = true; save.disabled = true; save.textContent = 'กำลังบันทึก...'; error.hidden = true;
+    saving = true; save.disabled = true; save.textContent = t('กำลังบันทึก...'); error.hidden = true;
     try {
       const response = await fetch('api/expense.php', { method: 'POST', headers: { 'X-CSRF-Token': window.staffCsrf, 'Accept': 'application/json' }, body: new FormData(form) });
       const result = await response.json();
@@ -30,8 +31,9 @@
       const params = new URLSearchParams({ year, month: String(Number(month)), saved: result.docNo });
       window.location.assign('staff/expenses/?' + params);
     } catch (e) {
-      error.textContent = e.message || 'ไม่สามารถเชื่อมต่อได้ กรุณาลองอีกครั้ง'; error.hidden = false;
-      saving = false; save.disabled = false; save.textContent = 'บันทึก';
+      error.dataset.i18n = e.message || 'ไม่สามารถเชื่อมต่อได้ กรุณาลองอีกครั้ง';
+      error.textContent = t(error.dataset.i18n); error.hidden = false;
+      saving = false; save.disabled = false; save.textContent = t('บันทึก');
     }
   });
 })();
