@@ -391,7 +391,7 @@ $base = ($base === '' || $base === '.') ? '/' : $base . '/';
             <article class="history-card">
               <template x-for="line in historyItems" :key="line.key">
                 <div class="cart-line history-cart-line">
-                  <img :src="line.image" :alt="line.name">
+                  <img :src="line.image" :alt="line.name" @error.once="$el.src = 'assets/images/food-placeholder.svg'">
                   <div class="cart-line-content">
                     <div class="history-item-heading"><div class="history-item-heading-main"><div class="cart-line-title"><h3 class="history-name" x-text="line.name"></h3></div><p class="history-item-time" x-show="formatHistoryTime(line.orderedAt)" x-text="formatHistoryTime(line.orderedAt)"></p></div></div>
                     <div class="history-item-status" :class="{ 'is-waiting': line.foodQueSts === 'W' }" x-show="!closed && line.statusDesc" x-cloak>

@@ -50,7 +50,7 @@
     items.innerHTML = matching.map(item => {
       const categoryName = categories.find(cat => cat.id === item.category)?.name;
       const unit = String(item.unit ?? '').trim();
-      return `<article class="item"><div class="item-image"><img src="${escape(item.image)}" alt="" loading="lazy"></div><div class="item-info"><strong>${escape(item.name)}</strong><span class="item-code">${english ? 'Code' : 'รหัส'}: ${escape(item.id)}</span>${categoryName ? `<span class="item-category">${escape(categoryName)}</span>` : ''}<span class="item-price">฿${Number(item.price).toLocaleString('th-TH', { maximumFractionDigits: 2 })}${unit ? ` <span>/ ${escape(unit)}</span>` : ''}</span></div><div class="image-actions"><button type="button" class="upload">${t(item.hasImage ? 'เปลี่ยนรูป' : 'เพิ่มรูป')}</button><button type="button" class="remove-image" ${item.hasImage ? '' : 'hidden'}>${t('ลบรูป')}</button></div><input type="file" accept="image/jpeg,image/png,image/webp"></article>`;
+      return `<article class="item"><div class="item-top"><div class="item-image"><img src="${escape(item.image)}" alt="" loading="lazy" ${item.hasImage ? '' : 'hidden'}><svg class="item-placeholder" ${item.hasImage ? 'hidden' : ''} viewBox="0 0 52 52" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 13c-2 2.5 2 4.5 0 7M26 11c-2 2.5 2 4.5 0 7M34 13c-2 2.5 2 4.5 0 7M7 26h38M9 26c0 9 6.5 15 17 15s17-6 17-15M19 46h14"/></svg></div><div class="item-info"><strong>${escape(item.name)}</strong><span class="item-code">${english ? 'Code' : 'รหัส'} ${escape(item.id)}</span>${categoryName ? `<span class="item-category">${escape(categoryName)}</span>` : ''}</div></div><div class="item-footer"><span class="item-price">฿${Number(item.price).toLocaleString('th-TH', { maximumFractionDigits: 2 })}${unit ? ` <span>/ ${escape(unit)}</span>` : ''}</span><div class="image-actions"><button type="button" class="upload"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="2.5" width="12" height="11" rx="2"/><circle cx="5.8" cy="6.2" r="1.1"/><path d="M2.5 12l3.5-3.5 2.5 2.5 2-2 3 3"/></svg><span>${t(item.hasImage ? 'เปลี่ยนรูป' : 'เพิ่มรูป')}</span></button><button type="button" class="remove-image" ${item.hasImage ? '' : 'hidden'}><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 4.5h11M6 4.5V3h4v1.5M4 4.5l.6 8.5h6.8l.6-8.5M6.5 7v4M9.5 7v4"/></svg><span>${t('ลบรูป')}</span></button></div></div><input type="file" accept="image/jpeg,image/png,image/webp"></article>`;
     }).join('');
     status.textContent = matching.length ? `${matching.length} ${document.documentElement.lang === 'en' ? 'items' : 'รายการ'}` : t('ไม่พบรายการอาหาร');
     [...items.children].forEach((card, index) => {
@@ -60,6 +60,8 @@
       }
       const button = card.querySelector('.upload'), removeButton = card.querySelector('.remove-image'), input = card.querySelector('input');
       const image = card.querySelector('.item-image');
+      const cardImage = image.querySelector('img'), placeholder = image.querySelector('.item-placeholder');
+      cardImage.addEventListener('error', () => { cardImage.hidden = true; placeholder.hidden = false; });
       image.setAttribute('role', 'button');
       image.tabIndex = matching[index].hasImage ? 0 : -1;
       image.setAttribute('aria-label', `${english ? 'View photo' : 'ดูรูปอาหาร'}: ${matching[index].name}`);
@@ -96,8 +98,8 @@
           const response = await fetch('api/food-image.php', { method: 'POST', headers: { 'X-CSRF-Token': csrf, 'Accept': 'application/json' }, body: data });
           const result = await response.json();
           if (!response.ok || !result.success) throw new Error(t(result.error?.message || 'ลบรูปไม่สำเร็จ'));
-          item.image = result.image; item.hasImage = false; card.querySelector('img').src = result.image; image.tabIndex = -1;
-          button.textContent = t('เพิ่มรูป'); removeButton.hidden = true;
+          item.image = result.image; item.hasImage = false; cardImage.src = result.image; cardImage.hidden = true; placeholder.hidden = false; image.tabIndex = -1;
+          button.querySelector('span').textContent = t('เพิ่มรูป'); removeButton.hidden = true;
           Swal.fire({
             icon: result.shared ? 'info' : 'success',
             title: english ? 'Photo removed' : 'ลบรูปเรียบร้อยแล้ว',
@@ -125,15 +127,15 @@
         });
         if (!confirmation.isConfirmed) { input.value = ''; return; }
         const objectUrl = URL.createObjectURL(file), img = card.querySelector('img'), previous = img.src;
-        img.src = objectUrl;
+        img.src = objectUrl; img.hidden = false; placeholder.hidden = true;
         const data = new FormData(); data.set('id', matching[index].id); data.set('branch', branch); data.set('image', file);
-        button.disabled = true; removeButton.disabled = true; button.textContent = t('กำลังบันทึก...');
+        button.disabled = true; removeButton.disabled = true; button.querySelector('span').textContent = t('กำลังบันทึก...');
         try {
           const response = await fetch('api/food-image.php', { method:'POST', headers:{ 'X-CSRF-Token':csrf, 'Accept':'application/json' }, body:data });
           const result = await response.json();
           if (!response.ok || !result.success) throw new Error(t(result.error?.message || 'บันทึกรูปไม่สำเร็จ'));
           const wasChanged = matching[index].hasImage;
-          matching[index].image = result.image; matching[index].hasImage = true; img.src = result.image; image.tabIndex = 0; button.textContent = t('เปลี่ยนรูป'); removeButton.hidden = false;
+          matching[index].image = result.image; matching[index].hasImage = true; img.src = result.image; image.tabIndex = 0; button.querySelector('span').textContent = t('เปลี่ยนรูป'); removeButton.hidden = false;
           const english = document.documentElement.lang === 'en';
           Swal.fire({
             icon: 'success',
@@ -142,7 +144,7 @@
             showConfirmButton: false,
             timer: 1600,
           });
-        } catch (error) { img.src = previous; alert(error.message || t('บันทึกรูปไม่สำเร็จ')); button.textContent = t(matching[index].hasImage ? 'เปลี่ยนรูป' : 'เพิ่มรูป'); }
+        } catch (error) { img.src = previous; img.hidden = !matching[index].hasImage; placeholder.hidden = matching[index].hasImage; alert(error.message || t('บันทึกรูปไม่สำเร็จ')); button.querySelector('span').textContent = t(matching[index].hasImage ? 'เปลี่ยนรูป' : 'เพิ่มรูป'); }
         finally { URL.revokeObjectURL(objectUrl); input.value = ''; button.disabled = false; removeButton.disabled = false; }
       });
     });

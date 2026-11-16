@@ -5807,7 +5807,7 @@ html[data-initial-route="login"] .content-layout {
   :is(.menu-category-sticky, .table-category-sticky).is-stuck::before {
     content: '';
     position: absolute;
-    inset: 0 0 -28px;
+    inset: 0;
     z-index: -1;
     background: #fff;
 

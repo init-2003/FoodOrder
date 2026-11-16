@@ -1,6 +1,7 @@
 <?php
 declare(strict_types=1);
 require_once __DIR__ . '/../Database/db.php';
+require_once __DIR__ . '/product_image.php';
 
 function loadOrderHistory(PDO $pdo, string $fnDocNo, string $branchId, string $tableInput): array
 {
@@ -55,17 +56,19 @@ function loadOrderHistory(PDO $pdo, string $fnDocNo, string $branchId, string $t
     $pendingTotal = 0.0;
 
     // 2. Fetch the bill's ordered items together, newest first.
-    $sqlConfirmed = "SELECT ID_NO, Trade_ID, CONVERT(varbinary(max), Trade_Name) as Trade_Name, 
-                            Qty, Sale_Price, Fn_Doc_Date_Time, 
-                            CONVERT(varbinary(max), Group_Pro) as Group_Pro,
-                            CONVERT(varbinary(max), Unit_Name) as Unit_Name,
-                            Food_Que_STS, Print_STS
-                     FROM Fnt_Detail 
-                     WHERE Fn_Doc_No = ? 
-                       AND Qty <> 0 
-                       AND Branch_ID = ? 
-                       AND NULLIF(LTRIM(RTRIM(ISNULL(Food_Que_STS,''))), '') IS NOT NULL
-                     ORDER BY Fn_Doc_Date_Time DESC, ID_NO DESC";
+    $sqlConfirmed = "SELECT d.ID_NO, d.Trade_ID, CONVERT(varbinary(max), d.Trade_Name) as Trade_Name,
+                            d.Qty, d.Sale_Price, d.Fn_Doc_Date_Time,
+                            CONVERT(varbinary(max), d.Group_Pro) as Group_Pro,
+                            CONVERT(varbinary(max), d.Unit_Name) as Unit_Name,
+                            d.Food_Que_STS, d.Print_STS, image.Link_Part_image
+                     FROM Fnt_Detail d
+                     OUTER APPLY (SELECT TOP 1 CONVERT(varbinary(max), t.Link_Part_image) AS Link_Part_image
+                                  FROM Trade t WHERE t.Trade_ID = d.Trade_ID AND t.Branch_Id = d.Branch_Id) image
+                     WHERE d.Fn_Doc_No = ?
+                       AND d.Qty <> 0
+                       AND d.Branch_ID = ?
+                       AND NULLIF(LTRIM(RTRIM(ISNULL(d.Food_Que_STS,''))), '') IS NOT NULL
+                     ORDER BY d.Fn_Doc_Date_Time DESC, d.ID_NO DESC";
     $stmtC = $pdo->prepare($sqlConfirmed);
     $stmtC->execute([$docNo, $branchId]);
     $rawConfirmed = $stmtC->fetchAll(PDO::FETCH_ASSOC);
@@ -83,6 +86,7 @@ function loadOrderHistory(PDO $pdo, string $fnDocNo, string $branchId, string $t
         $qty = (int)$cRow['Qty'];
         $sts = trim((string)$cRow['Food_Que_STS']);
         $lineTotal = $price * $qty;
+        $imagePath = trim(Database::decodeThai($cRow['Link_Part_image'] ?? null));
         $confirmedTotal += $lineTotal;
 
         $itemObj = [
@@ -96,7 +100,7 @@ function loadOrderHistory(PDO $pdo, string $fnDocNo, string $branchId, string $t
             'orderedAt' => $cRow['Fn_Doc_Date_Time'] ?? null,
             'foodQueSts' => $sts,
             'statusDesc' => $formatQueStatus($sts),
-            'image' => 'assets/images/food-placeholder.svg',
+            'image' => $imagePath !== '' ? productImageUrl($imagePath) : 'assets/images/food-placeholder.svg',
             'lineTotal' => $lineTotal,
         ];
 

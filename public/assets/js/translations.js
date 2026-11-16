@@ -89,7 +89,7 @@ const UI_EN = {
   'อันเกิม':'Angeum', 'อันเกิม สาขาหลัก':'Angeum Main Branch', 'ล้างคำค้น':'Clear search',
   'กรุณาเข้าสู่ระบบ เพื่อเลือกโต๊ะ เปิดบิล และรับรายการอาหาร':'Sign in to select tables, open bills, and take orders.',
   'หน้าหลักพนักงาน':'Staff Home', 'เลือกการทำงาน':'Select Action',
-  'เลือกโต๊ะ/เปิดบิล':'Tables / Open bill', 'จัดการเมนูอาหาร':'Manage menu', 'ค่าใช้จ่าย':'Expenses',
+  'เลือกโต๊ะ/เปิดบิล':'Tables / Open bill', 'จัดการเมนูอาหาร':'Manage menu', 'ค่าใช้จ่าย':'Expenses', 'รายงานการเงิน':'Financial report', 'ดูรายได้ ค่าใช้จ่าย และกำไร':'View revenue, expenses and profit',
   'เมนูการทำงาน':'Staff Menu', 'ปิดเมนู':'Close menu',
   'เปิดโต๊ะและรับรายการอาหาร':'Open table & take orders',
   'จัดการรายการอาหาร':'Manage Dishes', 'เพิ่มและเปลี่ยนรูปอาหาร':'Add & change dish photos',

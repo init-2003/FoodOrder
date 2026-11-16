@@ -5,13 +5,16 @@ require_once __DIR__ . '/../../Services/ExpenseReportService.php';
 require_once __DIR__ . '/../../Services/ExpenseWriteService.php';
 header('Cache-Control: private, no-store');
 $now = new DateTimeImmutable('now', new DateTimeZone('Asia/Bangkok'));
-$yearInput = $_GET['year'] ?? $now->format('Y');
-$monthInput = $_GET['month'] ?? $now->format('n');
-$year = filter_var($yearInput, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1900, 'max_range' => 9999]]);
-$month = filter_var($monthInput, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1, 'max_range' => 12]]);
+$period = $_GET['period'] ?? 'daily';
+$dateInput = $_GET['date'] ?? $now->format('Y-m-d');
+$monthInput = $_GET['month'] ?? $now->format('Y-m');
+$validPeriod = is_string($period) && in_array($period, ['daily', 'monthly'], true);
+$input = $validPeriod && $period === 'daily' ? $dateInput : $monthInput;
+$format = $validPeriod && $period === 'daily' ? 'Y-m-d' : 'Y-m';
+$parsed = is_string($input) ? DateTimeImmutable::createFromFormat('!' . $format, $input) : false;
+$validDate = $parsed && $parsed->format($format) === $input && (int)$parsed->format('Y') >= 1900 && ($format !== 'Y-m-d' || $input <= '9999-12-30');
 $error = '';
-$years = [];
-$report = ['total' => null, 'items' => []];
+$report = ['revenue' => null, 'total' => null, 'profit' => null, 'items' => []];
 $expenseOptions = ['types' => [], 'staff' => []];
 $optionsError = '';
 $_SESSION['expense_submission'] = ['token' => bin2hex(random_bytes(32))];
@@ -27,28 +30,21 @@ try {
 try {
     $db = Database::getConnection();
     if (!$db) throw new RuntimeException('Database unavailable');
-    $years = loadExpenseYears($db);
-    if ($year === false || $month === false) {
+    if (!$validPeriod || !$validDate) {
         http_response_code(400);
-        $error = 'กรุณาเลือกปีและเดือนให้ถูกต้อง';
-    } elseif (!$years) {
-        $error = 'ไม่มีข้อมูลรายจ่ายในฐานข้อมูล';
-    } elseif (!in_array($year, $years, true)) {
-        if (isset($_GET['year'])) {
-            http_response_code(400);
-            $error = 'ไม่มีข้อมูลรายจ่ายสำหรับปีที่เลือก';
-        }
-        $year = $years[0];
+        $error = 'กรุณาเลือกช่วงเวลาและวันที่ให้ถูกต้อง';
+    } else {
+        $report = loadFinancialReport($db, $period, $parsed->format('Y-m-d'));
     }
-    if ($error === '') $report = loadMonthlyExpenses($db, $year, $month);
 } catch (Throwable $e) {
     appLog('error', 'Expense report failed', ['error' => $e->getMessage()]);
     http_response_code(503);
     $error = 'ไม่สามารถโหลดรายงานได้ กรุณาลองใหม่อีกครั้ง';
 }
-$displayYear = $year === false ? ($years[0] ?? (int)$now->format('Y')) : $year;
-$displayMonth = $month === false ? (int)$now->format('n') : $month;
+$displayDate = $validDate ? $parsed : $now;
+$period = $validPeriod ? $period : 'monthly';
 $months = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+$periodLabel = ($period === 'daily' ? $displayDate->format('j') . ' ' : '') . $months[(int)$displayDate->format('n') - 1] . ' ' . $displayDate->format('Y');
 ?><!doctype html>
 <html lang="th">
 <head>
@@ -63,14 +59,14 @@ $months = ['มกราคม','กุมภาพันธ์','มีนา�
 <?php require __DIR__ . '/staff-header.php'; ?>
 <main class="expense-shell">
   <div class="expense-heading">
-    <div><h1 data-i18n="ค่าใช้จ่าย">ค่าใช้จ่าย</h1></div>
-    <button type="button" class="expense-add" id="expense-open" data-i18n="บันทึกค่าใช้จ่าย" <?= $optionsError !== '' ? 'disabled' : '' ?>>บันทึกค่าใช้จ่าย</button>
+    <div><h1 data-i18n="รายงานการเงิน">รายงานการเงิน</h1></div>
+    <button type="button" class="expense-add expense-add-desktop" aria-label="บันทึกค่าใช้จ่าย" data-i18n-aria-label="บันทึกค่าใช้จ่าย" <?= $optionsError !== '' ? 'disabled' : '' ?>><span data-i18n="บันทึกค่าใช้จ่าย">บันทึกค่าใช้จ่าย</span></button>
   </div>
   <?php if (isset($_GET['saved']) && preg_match('/^[a-zA-Z0-9]{1,15}$/D', (string)$_GET['saved'])): ?><p class="expense-saved" role="status"><span data-i18n="บันทึกค่าใช้จ่ายแล้ว เลขที่เอกสาร">บันทึกค่าใช้จ่ายแล้ว เลขที่เอกสาร</span> <?= htmlspecialchars((string)$_GET['saved'], ENT_QUOTES, 'UTF-8') ?></p><?php endif ?>
   <?php if ($optionsError !== ''): ?><p class="expense-message" role="status" data-i18n="<?= htmlspecialchars($optionsError, ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($optionsError, ENT_QUOTES, 'UTF-8') ?></p><?php endif ?>
   <dialog id="expense-dialog" class="expense-dialog" aria-labelledby="expense-dialog-title">
     <form id="expense-form">
-      <div class="expense-dialog-header"><div><h2 id="expense-dialog-title" data-i18n="บันทึกค่าใช้จ่าย">บันทึกค่าใช้จ่าย</h2></div><button type="button" id="expense-close" aria-label="ปิด" data-i18n-aria-label="ปิด"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+      <div class="expense-dialog-header"><div><h2 id="expense-dialog-title" data-i18n="บันทึกค่าใช้จ่าย">บันทึกค่าใช้จ่าย</h2></div><button type="button" id="expense-close" aria-label="ปิด" data-i18n-aria-label="ปิด"><svg class="expense-close-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg><svg class="expense-back-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5m7-7-7 7 7 7"/></svg></button></div>
       <input type="hidden" name="submission_token" value="<?= htmlspecialchars($_SESSION['expense_submission']['token'], ENT_QUOTES, 'UTF-8') ?>">
       <label><span data-i18n="วันที่">วันที่</span> <input type="date" name="date" value="<?= $now->format('Y-m-d') ?>" required></label>
       <label><span data-i18n="ประเภทค่าใช้จ่าย">ประเภทค่าใช้จ่าย</span> <select name="type" required><option value="" data-i18n="เลือกประเภทค่าใช้จ่าย">เลือกประเภทค่าใช้จ่าย</option><?php foreach ($expenseOptions['types'] as $type): ?><option value="<?= htmlspecialchars($type['id'], ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($type['name'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></option><?php endforeach ?></select></label>
@@ -81,19 +77,33 @@ $months = ['มกราคม','กุมภาพันธ์','มีนา�
       <div class="expense-dialog-actions"><button type="button" id="expense-cancel" data-i18n="ยกเลิก">ยกเลิก</button><button type="submit" id="expense-save" data-i18n="บันทึก">บันทึก</button></div>
     </form>
   </dialog>
-  <form method="get" action="staff/expenses/" class="expense-filters">
-    <label><span data-i18n="เดือน">เดือน</span><select name="month"><?php foreach ($months as $i => $name): ?><option value="<?= $i + 1 ?>" data-i18n="<?= htmlspecialchars($name, ENT_QUOTES, 'UTF-8') ?>" <?= $displayMonth === $i + 1 ? 'selected' : '' ?>><?= htmlspecialchars($name, ENT_QUOTES, 'UTF-8') ?></option><?php endforeach ?></select></label>
-    <label><span data-i18n="ปี (ค.ศ.)">ปี (ค.ศ.)</span><select name="year" <?= !$years ? 'disabled' : '' ?>><?php if (!$years): ?><option data-i18n="ไม่มีข้อมูล">ไม่มีข้อมูล</option><?php else: foreach ($years as $availableYear): ?><option value="<?= $availableYear ?>" <?= $displayYear === $availableYear ? 'selected' : '' ?>><?= $availableYear ?></option><?php endforeach; endif ?></select></label>
-    <button type="submit" data-i18n="แสดงรายงาน">แสดงรายงาน</button>
+  <nav class="expense-periods" aria-label="ช่วงรายงาน">
+    <a href="staff/expenses/?period=daily"<?= $period === 'daily' ? ' aria-current="page"' : '' ?>>รายวัน</a>
+    <a href="staff/expenses/?period=monthly"<?= $period === 'monthly' ? ' aria-current="page"' : '' ?>>รายเดือน</a>
+  </nav>
+  <form method="get" action="staff/expenses/" class="expense-filters" id="expense-report-filter">
+    <input type="hidden" name="period" value="<?= $period ?>">
+    <?php if ($period === 'daily'): ?>
+    <label><span>วันที่</span><input type="date" name="date" min="1900-01-01" max="9999-12-30" value="<?= $displayDate->format('Y-m-d') ?>" required></label>
+    <?php else: ?>
+    <label><span>เดือนและปี (ค.ศ.)</span><input type="month" name="month" min="1900-01" max="9999-12" value="<?= $displayDate->format('Y-m') ?>" required></label>
+    <?php endif ?>
+    <noscript><button type="submit" data-i18n="แสดงรายงาน">แสดงรายงาน</button></noscript>
   </form>
   <?php if ($error !== ''): ?>
     <div class="expense-panel"><p class="expense-message" role="alert" data-i18n="<?= htmlspecialchars($error, ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($error, ENT_QUOTES, 'UTF-8') ?></p></div>
   <?php else: ?>
+  <div class="financial-cards">
+    <?php foreach (['revenue' => 'รายได้', 'total' => 'ค่าใช้จ่าย', 'profit' => 'กำไรคงเหลือ'] as $key => $label): ?>
+    <section class="financial-card"><span><?= $label ?></span><strong><?= $report[$key] === null ? 'ไม่มีข้อมูล' : '฿ ' . number_format($report[$key], 2) ?></strong></section>
+    <?php endforeach ?>
+  </div>
+  <p class="expense-notice">ช่วงเวลาที่ไม่มีรายได้อาจไม่มีข้อมูลกำไรในรายงาน</p>
   <div class="expense-layout">
     <section class="expense-panel expense-main" aria-labelledby="expense-details-title">
-      <div class="expense-summary"><span data-i18n="รวมค่าใช้จ่ายทั้งหมด">รวมค่าใช้จ่ายทั้งหมด</span><strong<?= $report['total'] === null ? ' data-i18n="ไม่มีข้อมูล"' : '' ?>><?= $report['total'] === null ? 'ไม่มีข้อมูล' : '฿ ' . number_format($report['total'], 2) ?></strong></div>
+
       <div class="expense-section-heading"><h2 id="expense-details-title" data-i18n="รายจ่ายแยกตามประเภท">รายจ่ายแยกตามประเภท</h2><span><?= count($report['items']) ?> <span data-i18n-count="<?= count($report['items']) ?>">ประเภท</span></span></div>
-      <?php if (!$report['items']): ?><p class="expense-message" data-i18n="ไม่มีข้อมูลรายจ่ายในเดือนนี้">ไม่มีข้อมูลรายจ่ายในเดือนนี้</p><?php else: ?>
+      <?php if (!$report['items']): ?><p class="expense-message" data-i18n="ไม่มีข้อมูลรายจ่ายในช่วงเวลานี้">ไม่มีข้อมูลรายจ่ายในช่วงเวลานี้</p><?php else: ?>
       <?php
       $amounts = array_map(static fn(array $item): float => (float)$item['Ex_Price'], $report['items']);
       $total = $report['total'];
@@ -115,11 +125,12 @@ $months = ['มกราคม','กุมภาพันธ์','มีนา�
     </section>
     <aside class="expense-panel expense-context" aria-labelledby="expense-context-title">
       <h2 id="expense-context-title" data-i18n="รายละเอียดรายงาน">รายละเอียดรายงาน</h2>
-      <dl><div><dt data-i18n="ช่วงเวลา">ช่วงเวลา</dt><dd><span data-i18n="<?= htmlspecialchars($months[$displayMonth - 1], ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($months[$displayMonth - 1], ENT_QUOTES, 'UTF-8') ?></span> <?= $displayYear ?></dd></div><div><dt data-i18n="รายการ">รายการ</dt><dd><?= count($report['items']) ?> <span data-i18n-count="<?= count($report['items']) ?>">ประเภท</span></dd></div></dl>
+      <dl><div><dt data-i18n="ช่วงเวลา">ช่วงเวลา</dt><dd><?= htmlspecialchars($periodLabel, ENT_QUOTES, 'UTF-8') ?></dd></div><div><dt data-i18n="รายการ">รายการ</dt><dd><?= count($report['items']) ?> <span data-i18n-count="<?= count($report['items']) ?>">ประเภท</span></dd></div></dl>
     </aside>
   </div>
   <?php endif ?>
 </main>
+<button type="button" class="expense-add expense-add-mobile" aria-label="บันทึกค่าใช้จ่าย" data-i18n-aria-label="บันทึกค่าใช้จ่าย" <?= $optionsError !== '' ? 'disabled' : '' ?>><span class="expense-add-plus" aria-hidden="true">+</span></button>
 <script src="assets/js/staff-header.js?v=<?= hash_file('sha256', __DIR__ . '/../../../public/assets/js/staff-header.js') ?>" defer></script>
 <script src="assets/js/expense-write.js?v=<?= hash_file('sha256', __DIR__ . '/../../../public/assets/js/expense-write.js') ?>" defer></script>
 </body></html>

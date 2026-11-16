@@ -38,6 +38,7 @@ body.has-staff-sidebar .staff-shared-header .topbar-default .brand {
   flex: none;
 }
 body.has-staff-sidebar .staff-shared-header .topbar-default .mobile-brand { display: none !important; }
+.staff-mobile-title { display: none; }
 
 body.has-staff-sidebar :is(.head, .topbar) .brand {
   display: flex;
@@ -420,6 +421,25 @@ body.staff-home .swal2-popup:not(.swal2-toast) .swal2-styled.swal2-cancel { colo
   body.has-staff-sidebar .staff-shared-header .topbar-default .mobile-brand { display: flex !important; }
   body.has-staff-sidebar .account-menu-brand,
   body.has-staff-sidebar .account-menu-brand + .account-menu-divider { display: none; }
+}
+@media (max-width: 760px) {
+  body.has-staff-sidebar .staff-shared-header { position: sticky; top: 0; z-index: 40; }
+  body.has-staff-sidebar :is(.menu-category-sticky, .table-category-sticky) { top: 60px; }
+  body.has-staff-sidebar .staff-shared-header.has-mobile-title .topbar-default { position: relative; }
+  body.has-staff-sidebar .staff-shared-header.has-mobile-title .topbar-default .mobile-brand { display: none !important; }
+  body.has-staff-sidebar .staff-shared-header.has-mobile-title .staff-mobile-title {
+    display: block;
+    position: absolute;
+    left: calc(50% - 26px);
+    transform: translateX(-50%);
+    max-width: calc(100% - 52px);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: #263a31;
+    font: 700 17px/1.4 'Staff Header Noto', sans-serif;
+    pointer-events: none;
+  }
 }
 body.staff-home:not(.food-image-page) > main.shell { width: 100%; max-width: none; }
 

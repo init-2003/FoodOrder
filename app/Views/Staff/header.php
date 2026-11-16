@@ -1,9 +1,22 @@
-<?php $orderingHeader = ($headerMode ?? '') === 'alpine'; ?>
+<?php
+$orderingHeader = ($headerMode ?? '') === 'alpine';
+$headerNavigation = require dirname(__DIR__, 3) . '/config/staff-navigation.php';
+$headerLabel = '';
+foreach ($headerNavigation as $item) {
+    if (($route ?? '') === $item['route'] && $item['key'] !== 'home') $headerLabel = $item['label'];
+    if ($item['key'] === 'tables') $tablesLabel = $item['label'];
+}
+?>
 <link rel="stylesheet" href="assets/css/staff-topbar.css?v=<?= hash_file('sha256', __DIR__ . '/../../../public/assets/css/staff-topbar.css') ?>">
-<header class="<?= $orderingHeader ? 'topbar' : 'head' ?> staff-shared-header">
+<header class="<?= $orderingHeader ? 'topbar' : 'head' ?> staff-shared-header<?= !$orderingHeader && $headerLabel !== '' ? ' has-mobile-title' : '' ?>"<?php if ($orderingHeader): ?> :class="{'has-mobile-title': staff && page !== 'login'}"<?php endif; ?>>
   <div class="header-actions"><?php require __DIR__ . '/sidebar.php'; ?></div>
   <div class="topbar-default" <?php if ($orderingHeader): ?>x-show="!searchOpen || (page !== 'menu' && page !== 'tables')" x-transition:enter="search-enter" x-transition:enter-start="search-enter-start" x-transition:enter-end="search-enter-end" x-transition:leave="search-leave" x-transition:leave-start="search-enter-end" x-transition:leave-end="search-enter-start"<?php endif; ?>>
   <?php $headerBrand = true; require __DIR__ . '/brand.php'; $headerBrand = false; ?>
+<?php if ($orderingHeader): ?>
+      <span class="staff-mobile-title" x-show="staff && page !== 'login'" x-text="t(<?= htmlspecialchars(json_encode($tablesLabel, JSON_UNESCAPED_UNICODE), ENT_QUOTES, 'UTF-8') ?>)" x-cloak></span>
+<?php elseif ($headerLabel !== ''): ?>
+      <span class="staff-mobile-title" data-i18n="<?= htmlspecialchars($headerLabel, ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($headerLabel, ENT_QUOTES, 'UTF-8') ?></span>
+<?php endif; ?>
 <?php if ($orderingHeader): ?>
       <div class="topbar-right">
 

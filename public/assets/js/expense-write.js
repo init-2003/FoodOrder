@@ -3,9 +3,13 @@
   const form = document.querySelector('#expense-form');
   const save = document.querySelector('#expense-save');
   const error = document.querySelector('#expense-form-error');
+  const reportFilter = document.querySelector('#expense-report-filter');
+  reportFilter.addEventListener('change', event => {
+    if (event.target.matches('input[type="date"], input[type="month"]') && event.target.validity.valid) reportFilter.requestSubmit();
+  });
   const t = text => window.staffTranslate ? window.staffTranslate(text) : text;
   let saving = false, closing = false;
-  document.querySelector('#expense-open').addEventListener('click', () => { error.hidden = true; dialog.showModal(); });
+  document.querySelectorAll('.expense-add').forEach(button => button.addEventListener('click', () => { error.hidden = true; dialog.showModal(); }));
   const close = () => {
     if (saving || closing || !dialog.open) return;
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) { dialog.close(); return; }
@@ -27,8 +31,7 @@
       const response = await fetch('api/expense.php', { method: 'POST', headers: { 'X-CSRF-Token': window.staffCsrf, 'Accept': 'application/json' }, body: new FormData(form) });
       const result = await response.json();
       if (!response.ok || !result.success) throw new Error(result.error?.message || 'ไม่สามารถบันทึกค่าใช้จ่ายได้');
-      const [year, month] = result.date.split('-');
-      const params = new URLSearchParams({ year, month: String(Number(month)), saved: result.docNo });
+      const params = new URLSearchParams({ period: 'monthly', month: result.date.slice(0, 7), saved: result.docNo });
       window.location.assign('staff/expenses/?' + params);
     } catch (e) {
       error.dataset.i18n = e.message || 'ไม่สามารถเชื่อมต่อได้ กรุณาลองอีกครั้ง';
