@@ -44,7 +44,7 @@ try {
 $displayDate = $validDate ? $parsed : $now;
 $period = $validPeriod ? $period : 'monthly';
 $months = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
-$periodLabel = ($period === 'daily' ? $displayDate->format('j') . ' ' : '') . $months[(int)$displayDate->format('n') - 1] . ' ' . $displayDate->format('Y');
+$periodMonth = $months[(int)$displayDate->format('n') - 1];
 ?><!doctype html>
 <html lang="th">
 <head>
@@ -77,16 +77,16 @@ $periodLabel = ($period === 'daily' ? $displayDate->format('j') . ' ' : '') . $m
       <div class="expense-dialog-actions"><button type="button" id="expense-cancel" data-i18n="ยกเลิก">ยกเลิก</button><button type="submit" id="expense-save" data-i18n="บันทึก">บันทึก</button></div>
     </form>
   </dialog>
-  <nav class="expense-periods" aria-label="ช่วงรายงาน">
-    <a href="staff/expenses/?period=daily"<?= $period === 'daily' ? ' aria-current="page"' : '' ?>>รายวัน</a>
-    <a href="staff/expenses/?period=monthly"<?= $period === 'monthly' ? ' aria-current="page"' : '' ?>>รายเดือน</a>
+  <nav class="expense-periods" aria-label="ช่วงรายงาน" data-i18n-aria-label="ช่วงรายงาน">
+    <a href="staff/expenses/?period=daily" data-i18n="รายวัน"<?= $period === 'daily' ? ' aria-current="page"' : '' ?>>รายวัน</a>
+    <a href="staff/expenses/?period=monthly" data-i18n="รายเดือน"<?= $period === 'monthly' ? ' aria-current="page"' : '' ?>>รายเดือน</a>
   </nav>
   <form method="get" action="staff/expenses/" class="expense-filters" id="expense-report-filter">
     <input type="hidden" name="period" value="<?= $period ?>">
     <?php if ($period === 'daily'): ?>
-    <label><span>วันที่</span><input type="date" name="date" min="1900-01-01" max="9999-12-30" value="<?= $displayDate->format('Y-m-d') ?>" required></label>
+    <label><span data-i18n="วันที่">วันที่</span><input type="date" name="date" min="1900-01-01" max="9999-12-30" value="<?= $displayDate->format('Y-m-d') ?>" required></label>
     <?php else: ?>
-    <label><span>เดือนและปี (ค.ศ.)</span><input type="month" name="month" min="1900-01" max="9999-12" value="<?= $displayDate->format('Y-m') ?>" required></label>
+    <label><span data-i18n="เดือนและปี (ค.ศ.)">เดือนและปี (ค.ศ.)</span><input type="month" name="month" min="1900-01" max="9999-12" value="<?= $displayDate->format('Y-m') ?>" required></label>
     <?php endif ?>
     <noscript><button type="submit" data-i18n="แสดงรายงาน">แสดงรายงาน</button></noscript>
   </form>
@@ -95,10 +95,10 @@ $periodLabel = ($period === 'daily' ? $displayDate->format('j') . ' ' : '') . $m
   <?php else: ?>
   <div class="financial-cards">
     <?php foreach (['revenue' => 'รายได้', 'total' => 'ค่าใช้จ่าย', 'profit' => 'กำไรคงเหลือ'] as $key => $label): ?>
-    <section class="financial-card"><span><?= $label ?></span><strong><?= $report[$key] === null ? 'ไม่มีข้อมูล' : '฿ ' . number_format($report[$key], 2) ?></strong></section>
+    <section class="financial-card"><span data-i18n="<?= htmlspecialchars($label, ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($label, ENT_QUOTES, 'UTF-8') ?></span><strong<?= $report[$key] === null ? ' data-i18n="ไม่มีข้อมูล"' : '' ?>><?= $report[$key] === null ? 'ไม่มีข้อมูล' : '฿ ' . number_format($report[$key], 2) ?></strong></section>
     <?php endforeach ?>
   </div>
-  <p class="expense-notice">ช่วงเวลาที่ไม่มีรายได้อาจไม่มีข้อมูลกำไรในรายงาน</p>
+  <p class="expense-notice" data-i18n="ช่วงเวลาที่ไม่มีรายได้อาจไม่มีข้อมูลกำไรในรายงาน">ช่วงเวลาที่ไม่มีรายได้อาจไม่มีข้อมูลกำไรในรายงาน</p>
   <div class="expense-layout">
     <section class="expense-panel expense-main" aria-labelledby="expense-details-title">
 
@@ -125,7 +125,7 @@ $periodLabel = ($period === 'daily' ? $displayDate->format('j') . ' ' : '') . $m
     </section>
     <aside class="expense-panel expense-context" aria-labelledby="expense-context-title">
       <h2 id="expense-context-title" data-i18n="รายละเอียดรายงาน">รายละเอียดรายงาน</h2>
-      <dl><div><dt data-i18n="ช่วงเวลา">ช่วงเวลา</dt><dd><?= htmlspecialchars($periodLabel, ENT_QUOTES, 'UTF-8') ?></dd></div><div><dt data-i18n="รายการ">รายการ</dt><dd><?= count($report['items']) ?> <span data-i18n-count="<?= count($report['items']) ?>">ประเภท</span></dd></div></dl>
+      <dl><div><dt data-i18n="ช่วงเวลา">ช่วงเวลา</dt><dd><?= $period === 'daily' ? $displayDate->format('j') . ' ' : '' ?><span data-i18n="<?= htmlspecialchars($periodMonth, ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($periodMonth, ENT_QUOTES, 'UTF-8') ?></span> <?= $displayDate->format('Y') ?></dd></div><div><dt data-i18n="รายการ">รายการ</dt><dd><?= count($report['items']) ?> <span data-i18n-count="<?= count($report['items']) ?>">ประเภท</span></dd></div></dl>
     </aside>
   </div>
   <?php endif ?>
