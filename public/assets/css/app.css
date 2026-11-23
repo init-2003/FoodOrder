@@ -5852,7 +5852,7 @@ html[data-initial-route="login"] .content-layout {
 .menu-row-image img { width: 100%; height: 100%; object-fit: cover; }
 .menu-item-row.sold-out .menu-row-image { position: relative; }
 .menu-item-row.sold-out .menu-row-image img,
-.detail-image.sold-out > img { opacity: .45; filter: grayscale(1); }
+.detail-image.sold-out > img { opacity: .45; }
 .menu-item-row.sold-out .menu-row-info { opacity: .72; }
 .menu-item-row.sold-out .menu-row-price .price,
 .detail-price.sold-out > strong {
@@ -5887,11 +5887,11 @@ html[data-initial-route="login"] .content-layout {
 }
 .detail-image > .menu-sold-out-stamp {
   z-index: 1;
-  padding: 8px 12px;
-  background: #fff5ee;
-  font-size: clamp(18px, 6vw, 28px);
+  padding: 6px 10px;
+  font-size: 20px;
   pointer-events: none;
 }
+.detail-image.sold-out { background: #f3f4f1; }
 .stop-sale-label { flex-shrink: 0; padding: 4px 8px; border-radius: 999px; background: #f1eeeb; color: #59443c; font-size: .75rem; font-weight: 600; }
 .menu-row-info { flex: 1; min-width: 0; align-self: stretch; display: flex; flex-direction: column; align-items: flex-start; gap: 5px; }
 .menu-row-title { border: 0; padding: 0; background: none; color: var(--ink); text-align: left; font-size: 16px; font-weight: 600; cursor: pointer; }
