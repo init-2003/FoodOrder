@@ -5850,10 +5850,48 @@ html[data-initial-route="login"] .content-layout {
 .menu-item-row:last-child { border-bottom: 0; padding-bottom: 0; }
 .menu-row-image { flex: 0 0 112px; width: 112px; height: 112px; border: 0; border-radius: 10px; overflow: hidden; padding: 0; cursor: pointer; background: #f3f4f1; }
 .menu-row-image img { width: 100%; height: 100%; object-fit: cover; }
-.menu-item-row.sold-out,
-.menu-item-row.sold-out .menu-row-image { cursor: default; }
-.menu-item-row.sold-out .menu-row-image img { opacity: .45; filter: grayscale(1); }
+.menu-item-row.sold-out .menu-row-image { position: relative; }
+.menu-item-row.sold-out .menu-row-image img,
+.detail-image.sold-out > img { opacity: .45; filter: grayscale(1); }
 .menu-item-row.sold-out .menu-row-info { opacity: .72; }
+.menu-item-row.sold-out .menu-row-price .price,
+.detail-price.sold-out > strong {
+  color: #565656;
+  text-decoration: line-through;
+}
+.detail-heading h2.sold-out { color: #666; }
+.menu-sold-out-stamp {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(-17deg);
+  padding: 4px 6px;
+  border: 2px solid currentColor;
+  border-radius: 2px;
+  background: transparent;
+  color: #963426;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: .065em;
+  line-height: 1;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.menu-sold-out-stamp::before {
+  position: absolute;
+  inset: 1px;
+  border: 1px dashed currentColor;
+  border-radius: 1px;
+  opacity: .55;
+  content: "";
+}
+.detail-image > .menu-sold-out-stamp {
+  z-index: 1;
+  padding: 8px 12px;
+  background: #fff5ee;
+  font-size: clamp(18px, 6vw, 28px);
+  pointer-events: none;
+}
 .stop-sale-label { flex-shrink: 0; padding: 4px 8px; border-radius: 999px; background: #f1eeeb; color: #59443c; font-size: .75rem; font-weight: 600; }
 .menu-row-info { flex: 1; min-width: 0; align-self: stretch; display: flex; flex-direction: column; align-items: flex-start; gap: 5px; }
 .menu-row-title { border: 0; padding: 0; background: none; color: var(--ink); text-align: left; font-size: 16px; font-weight: 600; cursor: pointer; }
