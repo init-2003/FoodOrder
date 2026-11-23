@@ -11,7 +11,7 @@ function loadMenu(PDO $pdo, string $branchId): array
                                   CONVERT(varbinary(max), Type_Name) as Type_Name, 
                                   CONVERT(varbinary(max), Unit_Name) as Unit_Name, 
                                   CONVERT(varbinary(max), Link_Part_image) as Link_Part_image,
-                                  Sale_Price, Cost_Price, Food_Type 
+                                  Sale_Price, Cost_Price, Food_Type, Trade_Stop_Sts
                            FROM Trade 
                            WHERE Branch_ID = ? 
                            ORDER BY Trade_ID ASC");
@@ -113,6 +113,7 @@ function loadMenu(PDO $pdo, string $branchId): array
             'image' => $img,
             'hasImage' => $linkImg !== '',
             'recommended' => $isRec,
+            'available' => trim((string)($r['Trade_Stop_Sts'] ?? '')) !== 'S',
             'recommendationScore' => $itemRank['score'] ?? 0,
             'recommendationQuantity' => $itemRank['quantity'] ?? 0,
             'trendScore' => $itemRank['trend'] ?? 0,

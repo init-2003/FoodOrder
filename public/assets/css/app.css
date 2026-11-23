@@ -5633,7 +5633,8 @@ html[data-initial-route="login"] .content-layout {
   font-weight: 600;
   cursor: pointer;
 }
-.order-slide { margin-top: 14px; }
+.order-submit { width: 100%; min-height: 54px; margin-top: 14px; border-radius: 999px; }
+.order-feedback { margin: 10px 0 0; font-size: .875rem; }
 .table-open-confirm .table-open-prompt { margin: 0 0 18px; }
 .swal2-popup.table-open-confirm .swal2-html-container { width: 100%; padding: 0 !important; }
 .table-open-confirm .table-open-slide { width: 100%; margin-top: 0; }
@@ -5849,6 +5850,11 @@ html[data-initial-route="login"] .content-layout {
 .menu-item-row:last-child { border-bottom: 0; padding-bottom: 0; }
 .menu-row-image { flex: 0 0 112px; width: 112px; height: 112px; border: 0; border-radius: 10px; overflow: hidden; padding: 0; cursor: pointer; background: #f3f4f1; }
 .menu-row-image img { width: 100%; height: 100%; object-fit: cover; }
+.menu-item-row.sold-out,
+.menu-item-row.sold-out .menu-row-image { cursor: default; }
+.menu-item-row.sold-out .menu-row-image img { opacity: .45; filter: grayscale(1); }
+.menu-item-row.sold-out .menu-row-info { opacity: .72; }
+.stop-sale-label { flex-shrink: 0; padding: 4px 8px; border-radius: 999px; background: #f1eeeb; color: #59443c; font-size: .75rem; font-weight: 600; }
 .menu-row-info { flex: 1; min-width: 0; align-self: stretch; display: flex; flex-direction: column; align-items: flex-start; gap: 5px; }
 .menu-row-title { border: 0; padding: 0; background: none; color: var(--ink); text-align: left; font-size: 16px; font-weight: 600; cursor: pointer; }
 .menu-row-info p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.45; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }

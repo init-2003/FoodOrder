@@ -31,6 +31,54 @@ test('verified customer QR with #login opens the bill and retains its document',
   assert.equal(app.page, 'menu'); assert.equal(app.docNo, '68005652'); assert.equal(location.hash, '#menu');
 });
 
+test('checkout sends once without a confirmation and shows success in history', async () => {
+  const { app, context } = setup();
+  app.canOrder = true;
+  app.cartReady = true;
+  app.cart = [{ id: 'dish', qty: 1 }];
+  app.t = text => text;
+  app.alert = () => assert.fail('Checkout should not show a popup');
+  let complete;
+  let requests = 0;
+  context.placeOrder = () => {
+    requests += 1;
+    return new Promise(resolve => { complete = resolve; });
+  };
+  vm.runInNewContext('PosStore.placeOrder = placeOrder', context);
+
+  const pending = app.submitOrder();
+  await app.submitOrder();
+  assert.equal(requests, 1);
+  assert.equal(app.sending, true);
+  complete({ docNo: '68005652' });
+  await pending;
+
+  assert.equal(app.sending, false);
+  assert.equal(app.orderSubmitted, true);
+  assert.equal(app.cart.length, 0);
+  assert.equal(app.page, 'history');
+});
+
+test('checkout keeps the cart when the order is rejected and allows another attempt', async () => {
+  const { app, context } = setup();
+  app.canOrder = true;
+  app.cartReady = true;
+  app.cart = [{ id: 'dish', qty: 1 }];
+  app.t = text => text;
+  app.language = 'th';
+  app.alert = () => assert.fail('Checkout should report errors inline');
+  vm.runInNewContext("PosStore.placeOrder = async () => { throw Object.assign(new Error('Rejected'), { status: 422 }); }", context);
+
+  await app.submitOrder();
+  assert.equal(app.orderError, 'Rejected');
+  assert.equal(app.cart.length, 1);
+  assert.equal(app.sending, false);
+
+  vm.runInNewContext("PosStore.placeOrder = async () => ({ docNo: '68005652' })", context);
+  await app.submitOrder();
+  assert.equal(app.orderSubmitted, true);
+});
+
 test('verified customer QR never navigates to login, including history changes', async () => {
   const { app, location, listeners } = setup();
   await app.init();
