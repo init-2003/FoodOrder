@@ -349,9 +349,12 @@ $base = ($base === '' || $base === '.') ? '/' : $base . '/';
           <div id="menu-sections"><template x-for="section in menuSections" :key="section.id">
             <section class="menu-category-section" :id="'menu-section-' + section.id">
               <h2 x-text="section.name"></h2>
-              <template x-for="item in section.items" :key="item.id"><article class="menu-item-row" :class="{'sold-out': !item.available}" role="button" :tabindex="item.available ? 0 : -1" :aria-disabled="!item.available" @click="openDetail(item)" @keydown.enter.prevent="openDetail(item)" @keydown.space.prevent="openDetail(item)" :aria-label="item.available ? t('ดูรายละเอียด ') + item.name : item.name + ' · ' + t('หยุดจำหน่ายชั่วคราว')">
-                <div class="menu-row-image"><img :src="item.image" :alt="item.name" loading="lazy"></div>
-                <div class="menu-row-info"><span class="menu-row-title" x-text="item.name"></span><span class="stop-sale-label" x-show="!item.available" x-text="t('หยุดจำหน่ายชั่วคราว')" x-cloak></span><p x-show="item.description && !item.description.startsWith('เมนูสดใหม่ ปรุงจากวัตถุดิบคุณภาพ')" x-text="item.description"></p><div class="menu-row-ranks" x-show="bestSellerRank(item.id) > 0 || trendingRank(item.id) > 0" x-cloak><span class="menu-rank-badge" x-show="bestSellerRank(item.id) > 0"><svg aria-hidden="true"><use href="#i-flame"/></svg><span x-text="t('ขายดี') + ' #' + bestSellerRank(item.id)"></span></span><span class="menu-rank-badge trending-rank" x-show="trendingRank(item.id) > 0"><svg aria-hidden="true"><use href="#i-bolt"/></svg><span x-text="t('มาแรง') + ' #' + trendingRank(item.id)"></span></span></div><div class="menu-row-price"><strong class="price" x-text="money(item.price)"></strong></div></div>
+              <template x-for="item in section.items" :key="item.id"><article class="menu-item-row" :class="{'sold-out': !item.available}" role="button" tabindex="0" @click="openDetail(item)" @keydown.enter.prevent="openDetail(item)" @keydown.space.prevent="openDetail(item)" :aria-label="t('ดูรายละเอียด ') + item.name + (item.available ? '' : ' · ' + t('หยุดจำหน่ายชั่วคราว'))">
+                <div class="menu-row-image">
+                  <img :src="item.image" :alt="item.name" loading="lazy">
+                  <span class="menu-sold-out-stamp" x-show="!item.available" aria-hidden="true" x-cloak>Sold Out</span>
+                </div>
+                <div class="menu-row-info"><span class="menu-row-title" x-text="item.name"></span><p x-show="item.description && !item.description.startsWith('เมนูสดใหม่ ปรุงจากวัตถุดิบคุณภาพ')" x-text="item.description"></p><div class="menu-row-ranks" x-show="bestSellerRank(item.id) > 0 || trendingRank(item.id) > 0" x-cloak><span class="menu-rank-badge" x-show="bestSellerRank(item.id) > 0"><svg aria-hidden="true"><use href="#i-flame"/></svg><span x-text="t('ขายดี') + ' #' + bestSellerRank(item.id)"></span></span><span class="menu-rank-badge trending-rank" x-show="trendingRank(item.id) > 0"><svg aria-hidden="true"><use href="#i-bolt"/></svg><span x-text="t('มาแรง') + ' #' + trendingRank(item.id)"></span></span></div><div class="menu-row-price"><strong class="price" x-text="money(item.price)"></strong></div></div>
                 <span class="menu-quick-add" x-show="item.available" aria-hidden="true"><svg class="icon"><use href="#i-plus"/></svg></span>
               </article></template>
             </section>
@@ -493,19 +496,20 @@ $base = ($base === '' || $base === '.') ? '/' : $base . '/';
 <div class="detail-overlay" x-ref="detailOverlay" x-show="detailOpen" x-cloak @pointerdown.self="if (noteFocused && isMobileLayout()) $event.preventDefault()" @click.self="noteFocused && isMobileLayout() ? $refs.detailNoteInput.blur() : closeDetail()" @touchmove.self.prevent x-transition:enter="detail-overlay-enter" x-transition:enter-start="detail-overlay-enter-start" x-transition:enter-end="detail-overlay-enter-end" x-transition:leave="detail-overlay-leave" x-transition:leave-start="detail-overlay-leave-start" x-transition:leave-end="detail-overlay-leave-end">
   <section class="detail-dialog" :class="{'note-focused': noteFocused}" role="dialog" aria-modal="true" aria-labelledby="detail-title" @keydown.tab="trapFocus($event)" x-ref="detailDialog" x-show="detailOpen" x-transition:enter="detail-dialog-enter" x-transition:enter-start="detail-dialog-enter-start" x-transition:enter-end="detail-dialog-enter-end" x-transition:leave="detail-dialog-leave" x-transition:leave-start="detail-dialog-leave-start" x-transition:leave-end="detail-dialog-leave-end">
     <div class="detail-dialog-inner">
-      <div class="detail-image">
+      <div class="detail-image" :class="{'sold-out': !selected?.available}">
         <div class="sheet-handle" aria-hidden="true"></div>
         <img :src="selected?.image || ''" :alt="selected?.name || ''">
+        <span class="menu-sold-out-stamp" x-show="!selected?.available" aria-hidden="true" x-cloak>Sold Out</span>
         <button class="detail-close" @click="closeDetail()" :aria-label="t('ปิดรายละเอียด')" x-ref="detailClose"><svg class="icon"><use href="#i-close"/></svg></button>
       </div>
       <div class="detail-content" x-ref="detailContent">
       <div class="detail-body">
         <div class="detail-heading">
           <div>
-            <h2 id="detail-title" x-text="selected?.name || ''"></h2>
+            <h2 id="detail-title" :class="{'sold-out': !selected?.available}" x-text="selected?.name || ''"></h2>
           </div>
         </div>
-        <div class="detail-price">
+        <div class="detail-price" :class="{'sold-out': !selected?.available}">
           <strong x-text="money(selected?.price || 0)"></strong>
           <s x-show="selected?.originalPrice" x-text="money(selected?.originalPrice || 0)"></s>
           <span style="font-size: 13px; color: #8e988b; margin-left: 6px; font-weight: normal;" x-show="selected?.unit" x-text="'/ ' + (selected?.unit || '')"></span>
