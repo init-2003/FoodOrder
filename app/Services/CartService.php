@@ -72,7 +72,7 @@ function processCart(PDO $pdo, string $action, string $docNo, string $branch, st
                 $pdo->rollBack();
                 return writeServiceResult(['error' => ['code' => 'CART_ITEM_CHANGED', 'message' => 'ไม่สามารถเปลี่ยนสินค้าในรายการเดิมได้']], 409);
             }
-            $stmt = $pdo->prepare("SELECT Trade_ID, CONVERT(varbinary(max), Trade_Name) AS Trade_Name, CONVERT(varbinary(max), Type_Name) AS Type_Name, CONVERT(varbinary(max), Unit_Name) AS Unit_Name, CONVERT(varbinary(max), Group_Pro) AS Group_Pro, Food_Type, Cost_Price, Sale_Price, Qty_Cut_Stock, Trade_Point FROM Trade WHERE Branch_ID=? AND Trade_ID=?");
+            $stmt = $pdo->prepare("SELECT Trade_ID, CONVERT(varbinary(max), Trade_Name) AS Trade_Name, CONVERT(varbinary(max), Type_Name) AS Type_Name, CONVERT(varbinary(max), Unit_Name) AS Unit_Name, CONVERT(varbinary(max), Group_Pro) AS Group_Pro, Food_Type, Cost_Price, Sale_Price, Qty_Cut_Stock, Trade_Point, Trade_Stop_Sts FROM Trade WHERE Branch_ID=? AND Trade_ID=?");
             $stmt->execute([$branch, $tradeId]);
             $product = $stmt->fetch(PDO::FETCH_ASSOC);
             $stmt->closeCursor();
@@ -81,6 +81,10 @@ function processCart(PDO $pdo, string $action, string $docNo, string $branch, st
                 return writeServiceResult(['error' => ['code' => 'ITEM_NOT_FOUND', 'message' => 'ไม่พบเมนูอาหารนี้ในระบบ POS']], 404);
             }
             $name = Database::decodeThai($product['Trade_Name']);
+            if (trim((string)($product['Trade_Stop_Sts'] ?? '')) === 'S') {
+                $pdo->rollBack();
+                return writeServiceResult(['error' => ['code' => 'ITEM_STOPPED', 'message' => 'หยุดจำหน่าย', 'itemName' => $name]], 409);
+            }
             $type = Database::decodeThai($product['Type_Name']);
             $unit = Database::decodeThai($product['Unit_Name']);
             $group = Database::decodeThai($product['Group_Pro']);

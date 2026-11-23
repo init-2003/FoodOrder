@@ -12,6 +12,10 @@
   "suggest": { "ext-pdo_sqlsrv": "Required for the future SQL Server integration" },
   "scripts": { "serve": "php -S 127.0.0.1:8080 -t public config/router.php",
     "test": "pest --configuration config/phpunit.xml",
+    "test:smoke": [
+      "pest --configuration config/phpunit.xml tests/Feature/BillServiceTest.php tests/Feature/BillHashServiceTest.php tests/Feature/MenuServiceTest.php tests/Feature/AuthServiceTest.php tests/Feature/TableOpeningServiceTest.php tests/Feature/TableServiceTest.php tests/Feature/WriteServicesTest.php tests/Feature/OrderHistoryServiceTest.php tests/Feature/ExpenseWriteServiceTest.php tests/Feature/ProductUploadServiceTest.php tests/Feature/ApiValidationTest.php",
+      "pest --configuration config/phpunit-smoke.xml"
+    ],
     "analyse": "phpstan analyse --configuration config/phpstan.neon --no-progress" },
   "require-dev": {
     "pestphp/pest": "*",

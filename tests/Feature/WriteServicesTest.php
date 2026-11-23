@@ -26,6 +26,24 @@ it('rolls back an order transaction for a missing bill', function () {
     expect($result['status'])->toBe(404)->and($result['body']['error']['code'])->toBe('BILL_NOT_FOUND');
 });
 
+it('rejects an order if the POS stopped selling the product after it was selected', function () {
+    $stmt = $this->createMock(PDOStatement::class);
+    $stmt->method('fetch')->willReturnOnConsecutiveCalls(
+        ['Fn_Doc_No' => '68005642', 'Doc_Sts' => 0, 'Table_ID' => '01', 'Table_Name' => ''],
+        ['Trade_Name' => substr(Database::hexThai('ข้าวผัด'), 2), 'Trade_Stop_Sts' => 'S'],
+    );
+    $pdo = $this->createMock(PDO::class);
+    $pdo->expects($this->once())->method('beginTransaction');
+    $pdo->expects($this->once())->method('rollBack');
+    $pdo->expects($this->never())->method('commit');
+    $pdo->method('prepare')->willReturn($stmt);
+
+    $result = submitOrder($pdo, ['items' => [['id' => 'A', 'qty' => 1]]], '68005642', '', '', '', '002', '', '', '', false, 'hash');
+    expect($result['status'])->toBe(409)
+        ->and($result['body']['error']['code'])->toBe('ITEM_STOPPED')
+        ->and($result['body']['error']['itemName'])->toBe('ข้าวผัด');
+});
+
 it('rolls back confirmation for a closed bill', function () {
     $stmt = $this->createMock(PDOStatement::class);
     $stmt->method('fetch')->willReturn(['Doc_Sts' => 1]);

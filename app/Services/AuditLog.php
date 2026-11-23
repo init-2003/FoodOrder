@@ -1,6 +1,7 @@
 <?php
 declare(strict_types=1);
 require_once __DIR__ . '/log.php';
+require_once __DIR__ . '/../Security/client_ip.php';
 
 /** Best-effort audit trail; callers must never pass credentials, tokens or raw requests. */
 function auditEvent(string $action, string $outcome, array $fields = [], ?string $directory = null): bool
@@ -23,7 +24,7 @@ function auditEvent(string $action, string $outcome, array $fields = [], ?string
         $stmt = $db->prepare('INSERT INTO audit_events (occurred_at, action, outcome, actor_type, employee_id, username, client_ip, branch, document, table_id, subject, details) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
         $stmt->execute([gmdate('Y-m-d\TH:i:s\Z'), $action, $outcome, $fields['actor_type'] ?? ($employee !== '' ? 'staff' : 'customer'), $employee ?: null,
             $fields['username'] ?? ($employee !== '' ? ($session['SUser'] ?? null) : null),
-            filter_var($_SERVER['REMOTE_ADDR'] ?? '', FILTER_VALIDATE_IP) ?: null,
+            clientIp($_SERVER, (string)(getenv('TRUSTED_PROXY_IPS') ?: '')),
             $fields['branch'] ?? null, $fields['document'] ?? null, $fields['table'] ?? null, $fields['subject'] ?? null,
             json_encode($details, JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE | JSON_THROW_ON_ERROR)]);
         auditPruneExpired($db);

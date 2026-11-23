@@ -205,6 +205,7 @@ const PosStore = {
     if (!response.ok || !result.success) {
       const error = new Error(result?.error?.message || result?.message || 'ORDER_FAILED');
       error.code = result?.error?.code || 'ORDER_FAILED';
+      error.itemName = result?.error?.itemName || '';
       error.status = response.status;
       throw error;
     }
@@ -315,12 +316,11 @@ document.addEventListener('alpine:init', () => {
       billLoaded: false,
       staff: initialStaff,
       loginUsername: '', loginPassword: '', loginRemember: false, loginLoading: false,
-      orderSlidePosition: 0, orderSlidePointer: null, orderSlideStartX: 0, orderSlideMax: 0,
       tablesList: [], tablesLoading: false, tablesRefreshing: false, tableSearch: '', tableFilter: 'all',
       pendingItems: [], pendingTotal: 0, confirmedTotal: 0, confirming: false,
       selected: { id: '', name: '', english: '', price: 0, originalPrice: 0, unit: '', image: '', description: '', allergens: '', recommended: false, available: true },
       detailOpen: false, detailQty: 1, detailNote: '', noteFocused: false, noteFocusTimer: null, editingKey: null,
-      sending: false, orderAwaitingConfirm: false, pendingRequest: null, returnFocus: null, storageWarningShown: false,
+      sending: false, orderError: '', orderSubmitted: false, pendingRequest: null, returnFocus: null, storageWarningShown: false,
       cartReady: false, cartError: false, cartRevision: 0, legacyCheckDone: false,
       cartBump: false,
       categoryDrag: null, categorySuppressClick: false, categoryHasScrolled: false, menuCategoryStuck: false, tableCategoryStuck: false,
@@ -838,16 +838,17 @@ document.addEventListener('alpine:init', () => {
           const selected = list?.querySelector('.category-button.selected');
           if (selected) list.scrollLeft += selected.getBoundingClientRect().left - list.getBoundingClientRect().left - 8;
         });
-        // The POS menu query has no availability field; keep ordering enabled
-        // without presenting a fabricated status in the API response.
         this.items = data.items.map(item => ({ ...item, available: item.available !== false }));
+        if (this.detailOpen) {
+          const currentItem = this.items.find(item => String(item.id).trim() === String(this.selected.id).trim());
+          if (currentItem) this.selected.available = currentItem.available;
+        }
         this.recommendationPairs = Array.isArray(data.recommendationPairs) ? data.recommendationPairs : [];
         const stored = getStoredCart(this.table, this.docNo) || this.cart;
         this.cart = Array.isArray(stored) ? stored.flatMap(line => {
           if (!line || !Number.isInteger(line.qty) || line.qty < 1) return [];
           const item = this.items.find(item => String(item.id).trim() === String(line.id).trim());
           if (item) {
-            if (!item.available) return [];
             return [{ ...item, key: typeof line.key === 'string' ? line.key : createCartLineKey(), qty: Math.min(99, line.qty), note: String(line.note || '').slice(0, 200) }];
           }
           return [line];
@@ -1477,7 +1478,11 @@ async syncBill() {
           showConfirmButton: false,
         });
       } catch (error) {
-        if (error.message.includes('BILL_CLOSED') || error.message.includes('ออกใบเสร็จ')) {
+        if (error.code === 'ITEM_STOPPED') {
+          await this.loadMenu();
+          this.selected.available = false;
+          await this.alert({ icon: 'warning', title: 'หยุดจำหน่ายชั่วคราว', text: error.itemName });
+        } else if (error.message.includes('BILL_CLOSED') || error.message.includes('ออกใบเสร็จ')) {
           await this.syncBill();
           this.navigate('closed');
           await this.alert({
@@ -1499,7 +1504,7 @@ async syncBill() {
     async changeQuantity(key, amount) {
       if (this.sending || this.closed || !this.canOrder) return;
       const line = this.cart.find(line => line.key === key);
-      if (!line) return;
+      if (!line || line.available === false) return;
 
       if (amount < 0 && line.qty <= 1) {
         await this.removeCartLine(key);
@@ -1533,126 +1538,57 @@ async syncBill() {
       }
       return Swal.fire({ confirmButtonColor: '#ef7147', cancelButtonColor: '#8c938f', confirmButtonText: this.t('ตกลง'), reverseButtons: true, ...translated });
     },
-    startOrderSlide(event) {
-      if (this.sending || this.closed || (event.pointerType === 'mouse' && event.button !== 0)) return;
-      this.orderSlidePointer = event.pointerId;
-      this.orderSlideStartX = event.clientX;
-      this.orderSlideMax = Math.max(0, this.$refs.orderSlideTrack.clientWidth - event.currentTarget.offsetWidth - 8);
-      this.orderSlidePosition = 0;
-      event.currentTarget.setPointerCapture(event.pointerId);
-    },
-    moveOrderSlide(event) {
-      if (this.orderSlidePointer !== event.pointerId) return;
-      this.orderSlidePosition = Math.min(this.orderSlideMax, Math.max(0, event.clientX - this.orderSlideStartX));
-    },
-    async endOrderSlide(event, cancelled = false) {
-      if (this.orderSlidePointer !== event.pointerId) return;
-      const complete = !cancelled && this.orderSlideMax > 0 && this.orderSlidePosition >= this.orderSlideMax * .85;
-      this.orderSlidePointer = null;
-      if (!complete) {
-        this.orderSlidePosition = 0;
-        return;
-      }
-      this.orderSlidePosition = this.orderSlideMax;
-      try {
-        await this.submitOrder();
-      } finally {
-        this.orderSlidePosition = 0;
-      }
-    },
-    async submitOrder() {
-      if (this.sending || this.closed || !this.canOrder) return;
-      if (!this.cart.length) {
-        await this.alert({ icon: 'warning', title: 'ตะกร้าของคุณว่าง', text: 'กรุณาเลือกอาหารก่อนสั่ง' });
-        return;
-      }
-      const cKey = this.cartStorageKey();
-      if (sessionStorage.getItem(`${cKey}:pending-order`)) {
-        await this.alert({ icon: 'warning', title: 'ยังยืนยันผลการสั่งไม่ได้', text: 'กรุณาตรวจสอบรายการที่สั่งหรือติดต่อพนักงานก่อนสั่งซ้ำ' });
-        return;
-      }
-      if (!this.cartReady) {
-        await this.alert({ icon: 'warning', title: this.language === 'en' ? 'Cart unavailable' : 'ยังเชื่อมต่อตะกร้าไม่ได้', text: this.language === 'en' ? 'Please reconnect and check your cart first.' : 'กรุณาลองเชื่อมต่อตะกร้าอีกครั้งก่อนสั่งอาหาร' });
-        return;
-      }
+        async submitOrder() {
+      if (this.sending || this.closed || !this.canOrder || !this.cart.length || !this.cartReady) return;
+
+      this.orderError = '';
+      this.orderSubmitted = false;
+      const pendingKey = this.cartStorageKey() + ':pending-order';
+      const verifyOrder = this.t('กรุณาตรวจสอบรายการที่สั่งหรือติดต่อพนักงานก่อนสั่งซ้ำ');
       this.sending = true;
-      this.orderAwaitingConfirm = true;
       try {
-        const confirm = await this.alert({
-          title: 'ต้องการยืนยันสั่งอาหารใช่หรือไม่',
-          text: this.language === 'en'
-            ? `${this.tableName || ('Table ' + this.table)}${this.docNo ? ' · #' + this.docNo : ''} · ${this.cartCount} items · Total ${this.money(this.cartTotal)}`
-            : `${this.tableName || ('โต๊ะ ' + this.table)}${this.docNo ? ' · บิล ' + this.docNo : ''} · ${this.cartCount} รายการ รวม ${Number(this.cartTotal).toLocaleString('th-TH')} บาท`,
-          icon: 'question',
-          showCancelButton: true,
-          confirmButtonColor: '#ef7147',
-          cancelButtonColor: '#8c938f',
-          confirmButtonText: 'ยืนยันสั่งอาหาร',
-          cancelButtonText: 'ยกเลิก',
-          reverseButtons: true
-        });
-        if (!confirm.isConfirmed) return;
-        this.orderAwaitingConfirm = false;
-
-        const idemKey = 'idem_' + SESSION_TOKEN + '_' + Date.now() + '_' + Math.random().toString(36).substring(2, 8);
-        sessionStorage.setItem(`${cKey}:pending-order`, idemKey);
-        const result = await PosStore.placeOrder(this.cart, this.table, this.docNo, this.branch, idemKey, false, this.staff?.emId || '');
-        if (result.docNo) {
-          this.docNo = result.docNo;
-        }
-        this.cart = [];
-        this.persistCart();
-        sessionStorage.removeItem(`${cKey}:pending-order`);
-        await this.syncBill();
-        this.navigate('history');
-
-        await this.alert({
-          icon: 'success',
-          title: 'รอยืนยันออเดอร์',
-          customClass: { popup: 'glass-success' },
-          timer: 2000,
-          showConfirmButton: false,
-        });
-      } catch (error) {
-        if (error.status >= 400 && error.status < 500 && error.status !== 408 && error.status !== 429) {
-          sessionStorage.removeItem(`${cKey}:pending-order`);
-        }
-        if (error.code === 'CART_ITEM_CHANGED') {
-          this.sending = false;
-          await this.syncRemoteCart();
-          await this.syncBill();
-          await this.alert({ icon: 'warning', title: this.language === 'en' ? 'Cart changed' : 'รายการในตะกร้ามีการเปลี่ยนแปลง', text: this.language === 'en' ? 'Please check your cart and order history before trying again.' : 'กรุณาตรวจสอบตะกร้าและรายการที่สั่งก่อนลองอีกครั้ง' });
+        if (sessionStorage.getItem(pendingKey)) {
+          this.orderError = verifyOrder;
           return;
         }
-        if (error.message.includes('BILL_CLOSED') || error.message.includes('ออกใบเสร็จ')) {
-          await this.syncBill();
-          this.navigate('closed');
-          await this.alert({
-            icon: 'warning',
-            title: 'บิลปิดแล้ว',
-            text: 'บิลนี้ออกใบเสร็จเรียบร้อยแล้ว ไม่สามารถสั่งอาหารเพิ่มได้'
-          });
-        } else if (error.message.includes('BILL_CANCELLED') || error.message.includes('ยกเลิก')) {
-          await this.syncBill();
-          this.navigate('closed');
-          await this.alert({
-            icon: 'error',
-            title: 'บิลถูกยกเลิก',
-            text: 'บิลนี้ถูกยกเลิกแล้ว (Doc_Sts = 3) ไม่สามารถสั่งอาหารได้'
-          });
-        } else {
-          await this.alert({
-            icon: 'error',
-            title: 'ยังส่งออเดอร์ไม่ได้',
-            text: this.language === 'en' ? 'Could not complete the request. Please contact the staff.' : (error.message || 'กรุณาตรวจสอบการเชื่อมต่อกับระบบ POS')
-          });
+        const idemKey = 'idem_' + SESSION_TOKEN + '_' + Date.now() + '_' + Math.random().toString(36).substring(2, 8);
+        sessionStorage.setItem(pendingKey, idemKey);
+        let result;
+        try {
+          result = await PosStore.placeOrder(this.cart, this.table, this.docNo, this.branch, idemKey, false, this.staff?.emId || '');
+        } catch (error) {
+          const rejected = error.status >= 400 && error.status < 500 && error.status !== 408 && error.status !== 429;
+          if (rejected) sessionStorage.removeItem(pendingKey);
+          const message = error.message || '';
+          if (error.code === 'ITEM_STOPPED') {
+            this.orderError = [error.itemName, this.t('หยุดจำหน่ายชั่วคราว'), this.t('กรุณานำรายการนี้ออกจากตะกร้าแล้วลองอีกครั้ง')].filter(Boolean).join(' · ');
+            await this.loadMenu();
+          } else if (error.code === 'CART_ITEM_CHANGED') {
+            this.orderError = this.t('กรุณาตรวจสอบตะกร้าและรายการที่สั่งก่อนลองอีกครั้ง');
+            await this.syncRemoteCart();
+            await this.syncBill();
+          } else if (/BILL_CLOSED|BILL_CANCELLED|ออกใบเสร็จ|ยกเลิก/.test(message)) {
+            await this.syncBill();
+            this.navigate('closed');
+          } else {
+            this.orderError = rejected
+              ? (this.language === 'en' || !message ? this.t('ยังส่งออเดอร์ไม่ได้') : message)
+              : verifyOrder;
+          }
+          return;
         }
+        if (result.docNo) this.docNo = result.docNo;
+        this.cart = [];
+        this.persistCart();
+        sessionStorage.removeItem(pendingKey);
+        this.orderSubmitted = true;
+        await this.syncBill();
+        this.navigate('history');
       } finally {
-        this.orderAwaitingConfirm = false;
         this.sending = false;
       }
     },
-    async confirmPending(tradeId = null, tradeName = '') {
+async confirmPending(tradeId = null, tradeName = '') {
       if (this.confirming || this.closed || !this.canOrder) return;
       const targetText = this.language === 'en'
         ? (tradeId ? `"${tradeName || tradeId}"` : `all ${this.pendingItems.length} pending items`)

@@ -1,0 +1,15 @@
+**
+!Dockerfile
+!composer.json
+!composer.lock
+!app/
+!app/**
+!config/
+!config/**
+!public/
+!public/**
+!routes/
+!routes/**
+!docker/
+!docker/apache.conf
+**/.env*

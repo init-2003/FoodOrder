@@ -157,7 +157,7 @@ function submitOrder(PDO $pdo, array $data, string $docInput, string $tableInput
                                        CONVERT(varbinary(max), Type_Name) as Type_Name, 
                                        CONVERT(varbinary(max), Unit_Name) as Unit_Name, 
                                        CONVERT(varbinary(max), Group_Pro) as Group_Pro, 
-                                       Cost_Price, Sale_Price, Food_Type, Qty, Qty_Cut_Stock, Trade_Point 
+                                       Cost_Price, Sale_Price, Food_Type, Qty, Qty_Cut_Stock, Trade_Point, Trade_Stop_Sts
                                 FROM Trade WITH (UPDLOCK, ROWLOCK)
                                 WHERE Trade_ID = ? AND Branch_ID = ?");
         $stmtP->execute([$itemId, $branchId]);
@@ -169,6 +169,10 @@ function submitOrder(PDO $pdo, array $data, string $docInput, string $tableInput
         }
 
         $tName = Database::decodeThai($product['Trade_Name']);
+        if (trim((string)($product['Trade_Stop_Sts'] ?? '')) === 'S') {
+            $pdo->rollBack();
+            return writeServiceResult(['error' => ['code' => 'ITEM_STOPPED', 'message' => 'หยุดจำหน่าย', 'itemName' => $tName]], 409);
+        }
         $cName = Database::decodeThai($product['Type_Name']);
         $uName = Database::decodeThai($product['Unit_Name']);
         $tradeGroupPro = $product ? (Database::decodeThai($product['Group_Pro']) ?: '') : '';
